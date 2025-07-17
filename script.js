@@ -1315,7 +1315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 sortedPeriodBookings.forEach(booking => {
-                    const client = clients.find(c => c.id == booking.clientId); 
+                    const client = clients.find(c => c.id == booking.client_id); 
                     const itemsBooked = Object.entries(booking.items)
                         .filter(([, quantity]) => quantity > 0)
                         .map(([itemId, quantity]) => {
@@ -1389,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
             dailyBookingsContainer.innerHTML = '<p>Nenhuma reserva para este dia.</p>';
         } else {
             bookingsOnDate.forEach(booking => {
-                const client = clients.find(c => c.id == booking.clientId); 
+                const client = clients.find(c => c.id == booking.client_id); 
                 const itemEl = document.createElement('div');
                 itemEl.className = 'daily-booking-item';
 
@@ -1533,7 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openModal(booking) {
-        const client = clients.find(c => c.id == booking.clientId); 
+        const client = clients.find(c => c.id == booking.client_id); 
 
         modalEventName.textContent = booking.eventName;
         modalClientName.textContent = client ? client.name : 'Cliente não encontrado';
@@ -1667,7 +1667,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addBookingEndTimeInput.value = bookingToEdit.endTime || '';
             addEventNameInput.value = bookingToEdit.eventName;
             addBookingPriceInput.value = bookingToEdit.price || 0;
-            addBookingClientSelect.value = bookingToEdit.clientId;
+            addBookingClientSelect.value = bookingToEdit.client_id;
             addBookingPaymentMethodInput.value = bookingToEdit.paymentMethod || ''; 
             addBookingPaymentStatusInput.value = bookingToEdit.paymentStatus || ''; 
             addBookingObservationsInput.value = bookingToEdit.observations || '';
@@ -2086,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         sortedBookings.forEach(booking => {
-            const client = clients.find(c => c.id == booking.clientId); 
+            const client = clients.find(c => c.id == booking.client_id); 
             const li = document.createElement('li');
             li.setAttribute('data-booking-id', booking.id);
 
