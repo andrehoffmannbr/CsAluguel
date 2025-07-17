@@ -5,13 +5,13 @@ let supabase;
 function initializeSupabase() {
     // Configuração do Supabase - usar apenas variáveis injetadas no HTML
     const SUPABASE_URL = window.SUPABASE_URL;
-    const SUPABASE_SERVICE_KEY = window.SUPABASE_SERVICE_KEY;
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
     
     // Verificar se as variáveis estão disponíveis
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         console.error('Supabase configuration missing:', {
             url: SUPABASE_URL ? 'OK' : 'MISSING',
-            key: SUPABASE_SERVICE_KEY ? 'OK' : 'MISSING'
+            key: SUPABASE_ANON_KEY ? 'OK' : 'MISSING'
         });
         return;
     }
@@ -21,8 +21,11 @@ function initializeSupabase() {
     
     // Verificar se o Supabase está disponível
     if (typeof window !== 'undefined' && window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         console.log('Supabase client initialized successfully with service role key');
+    } else if (typeof createClient !== 'undefined') { // Caso tenha importado via ES Module
+        supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase client initialized successfully');
     } else {
         console.error('Supabase library not loaded');
     }
