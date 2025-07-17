@@ -1,8 +1,72 @@
-import { WebsimSocket } from '@websim/websim-socket';
+// Configuração do Supabase
+let supabase;
+
+// Inicializar Supabase
+function initializeSupabase() {
+    // Configuração do Supabase - usar variáveis de ambiente se disponíveis
+    const SUPABASE_URL = window.SUPABASE_URL || 'https://todwaiccuifkhhzzydmk.supabase.co';
+    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NzA4MTAsImV4cCI6MjA2ODM0NjgxMH0.7cLD7-9FIP7KkIdIKMGmP-5OBzW00-3CZP4JOXX7UiU';
+    
+    // Verificar se o Supabase está disponível
+    if (typeof window !== 'undefined' && window.supabase) {
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase client initialized successfully');
+    } else {
+        console.error('Supabase library not loaded');
+    }
+}
+
+// Funções utilitárias para operações de banco
+async function supabaseSelect(table, filters = {}) {
+    try {
+        let query = supabase.from(table).select('*');
+        
+        Object.entries(filters).forEach(([key, value]) => {
+            query = query.eq(key, value);
+        });
+        
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+    } catch (error) {
+        console.error(`Error selecting from ${table}:`, error);
+        return [];
+    }
+}
+
+async function supabaseUpsert(table, data) {
+    try {
+        const { data: result, error } = await supabase
+            .from(table)
+            .upsert(data)
+            .select();
+        
+        if (error) throw error;
+        return result;
+    } catch (error) {
+        console.error(`Error upserting to ${table}:`, error);
+        throw error;
+    }
+}
+
+async function supabaseDelete(table, id) {
+    try {
+        const { error } = await supabase
+            .from(table)
+            .delete()
+            .eq('id', id);
+        
+        if (error) throw error;
+        return true;
+    } catch (error) {
+        console.error(`Error deleting from ${table}:`, error);
+        throw error;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize WebsimSocket
-    const room = new WebsimSocket();
+    // Inicializar Supabase
+    initializeSupabase();
 
     // --- NEW LOGIN ELEMENTS ---
     const loginContainer = document.getElementById('login-container');
@@ -165,7 +229,70 @@ document.addEventListener('DOMContentLoaded', () => {
     let miniCalendarDate = new Date();
     let selectedBookingDate = new Date().toISOString().split('T')[0];
     let currentEditingClient = null; 
-    let currentEditingBooking = null; 
+    let currentEditingBooking = null;
+
+    // Carregar dados iniciais do Supabase
+    async function loadInitialData() {
+        try {
+            if (!supabase) {
+                console.error('Supabase not initialized');
+                return;
+            }
+
+            // Carregar inventário
+            const inventoryData = await supabaseSelect('inventory');
+            inventory = inventoryData.map(item => ({
+                id: item.id,
+                name: item.name,
+                quantity: item.quantity,
+                cost: item.cost,
+                rentalPrice: item.rental_price
+            }));
+
+            // Carregar clientes
+            const clientsData = await supabaseSelect('clients');
+            clients = clientsData.map(client => ({
+                id: client.id,
+                name: client.name,
+                phone: client.phone,
+                email: client.email,
+                cpf: client.cpf,
+                address: client.address || {},
+                partyAddress: client.party_address || {}
+            }));
+
+            // Carregar reservas
+            const bookingsData = await supabaseSelect('bookings');
+            bookings = bookingsData.map(booking => ({
+                id: booking.id,
+                clientId: booking.client_id,
+                eventName: booking.event_name,
+                date: booking.date,
+                startTime: booking.start_time,
+                endTime: booking.end_time,
+                items: booking.items || {},
+                price: parseFloat(booking.price) || 0,
+                paymentMethod: booking.payment_method,
+                paymentStatus: booking.payment_status,
+                contractDataUrl: booking.contract_data_url,
+                eventAddress: booking.event_address || {},
+                observations: booking.observations
+            }));
+
+            // Renderizar interfaces
+            renderTotalInventory();
+            renderInventoryManagement();
+            renderClientsList();
+            populateClientsDropdown();
+            updateDailyAgenda();
+            renderDatePicker(miniCalendarDate);
+            initializeFinancialTab();
+
+        } catch (error) {
+            console.error('Error loading initial data:', error);
+            showAlert('Erro ao carregar dados do sistema. Verifique sua conexão.');
+        }
+    } 
 
     // --- NEW LOGIN FUNCTIONS ---
     function checkLoginStatus() {
@@ -410,13 +537,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const itemToUpdate = inventory.find(item => item.id === itemId);
         if (itemToUpdate && !isNaN(newQuantity) && newQuantity >= 0 && !isNaN(newCost) && newCost >= 0 && !isNaN(newRentalPrice) && newRentalPrice >= 0) {
-            await room.collection('inventory').upsert({ 
+            await supabaseUpsert('inventory', { 
                 id: itemId,
                 name: itemToUpdate.name, 
                 quantity: newQuantity, 
                 cost: newCost,
-                rentalPrice: newRentalPrice 
+                rental_price: newRentalPrice 
             });
+            
+            // Atualizar estado local
+            const itemIndex = inventory.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                inventory[itemIndex] = { ...itemToUpdate, quantity: newQuantity, cost: newCost, rentalPrice: newRentalPrice };
+            }
+            
+            renderTotalInventory();
+            renderInventoryManagement();
             showAlert(`Item '${itemToUpdate.name}' atualizado.`);
         } else {
             showAlert('Valores inválidos para quantidade, custo ou valor de aluguel.');
@@ -458,12 +594,21 @@ document.addEventListener('DOMContentLoaded', () => {
     async function executeAddItem() {
         const { name, quantity, cost, rentalPrice, id } = confirmAddItemBtn.dataset; 
 
-        await room.collection('inventory').upsert({ 
+        await supabaseUpsert('inventory', { 
             id, 
             name, 
             quantity: parseInt(quantity, 10), 
             cost: parseFloat(cost),
-            rentalPrice: parseFloat(rentalPrice) 
+            rental_price: parseFloat(rentalPrice) 
+        });
+
+        // Atualizar estado local
+        inventory.push({
+            id,
+            name,
+            quantity: parseInt(quantity, 10),
+            cost: parseFloat(cost),
+            rentalPrice: parseFloat(rentalPrice)
         });
 
         addItemForm.reset();
@@ -471,6 +616,8 @@ document.addEventListener('DOMContentLoaded', () => {
         newItemCostInput.value = 0;
         newItemRentalPriceInput.value = 0; 
         
+        renderTotalInventory();
+        renderInventoryManagement();
         addItemSection.classList.add('hidden'); 
         confirmAddItemModal.style.display = 'none'; 
     }
@@ -489,7 +636,13 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        await room.collection('inventory').upsert({ id, name, quantity, cost, rentalPrice }); 
+        await supabaseUpsert('inventory', { id, name, quantity, cost, rental_price: rentalPrice }); 
+        
+        // Atualizar estado local
+        inventory.push({ id, name, quantity, cost, rentalPrice });
+        renderTotalInventory();
+        renderInventoryManagement();
+        
         showAlert(`${quantity} ${name}(s) adicionado(s) ao estoque!`);
     }
 
@@ -498,7 +651,17 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const itemId = e.target.dataset.id;
         if (await showConfirm('Tem certeza que deseja remover este item do estoque?')) {
-            await room.collection('inventory').delete(itemId);
+            await supabaseDelete('inventory', itemId);
+            
+            // Atualizar estado local
+            const itemIndex = inventory.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                const itemName = inventory[itemIndex].name;
+                inventory.splice(itemIndex, 1);
+                renderTotalInventory();
+                renderInventoryManagement();
+                showAlert(`Item '${itemName}' removido do estoque.`);
+            }
         }
     }
 
@@ -545,14 +708,37 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (currentEditingClient) {
-            await room.collection('client').upsert({ ...clientData, id: currentEditingClient.id });
+            await supabaseUpsert('clients', { 
+                ...clientData, 
+                id: currentEditingClient.id,
+                party_address: clientData.partyAddress 
+            });
+            
+            // Atualizar estado local
+            const clientIndex = clients.findIndex(c => c.id === currentEditingClient.id);
+            if (clientIndex !== -1) {
+                clients[clientIndex] = { ...clientData, id: currentEditingClient.id };
+            }
+            
+            renderClientsList();
+            populateClientsDropdown();
             showAlert('Cliente atualizado com sucesso!');
             currentEditingClient = null;
             const submitBtn = addClientForm.querySelector('button[type="submit"]');
             submitBtn.textContent = 'Cadastrar Cliente';
             submitBtn.classList.remove('update-mode');
         } else {
-            await room.collection('client').upsert({ ...clientData, id: String(Date.now()) });
+            const newClientId = String(Date.now());
+            await supabaseUpsert('clients', { 
+                ...clientData, 
+                id: newClientId,
+                party_address: clientData.partyAddress 
+            });
+            
+            // Atualizar estado local
+            clients.push({ ...clientData, id: newClientId });
+            renderClientsList();
+            populateClientsDropdown();
             showAlert('Cliente cadastrado com sucesso!');
         }
 
@@ -668,7 +854,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const clientId = e.target.dataset.id; 
         if (await showConfirm('Tem certeza que deseja excluir este cliente? Isso NÃO excluirá as reservas associadas.')) {
-            await room.collection('client').delete(clientId);
+            await supabaseDelete('clients', clientId);
+            
+            // Atualizar estado local
+            const clientIndex = clients.findIndex(c => c.id === clientId);
+            if (clientIndex !== -1) {
+                const clientName = clients[clientIndex].name;
+                clients.splice(clientIndex, 1);
+                renderClientsList();
+                populateClientsDropdown();
+                showAlert(`Cliente '${clientName}' excluído com sucesso.`);
+            }
         }
     }
     
@@ -1306,7 +1502,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     async function deleteBooking(bookingId) {
         if (await showConfirm('Tem certeza que deseja excluir esta reserva?')) {
-            await room.collection('booking').delete(bookingId);
+            await supabaseDelete('bookings', bookingId);
+            
+            // Atualizar estado local
+            const bookingIndex = bookings.findIndex(b => b.id === bookingId);
+            if (bookingIndex !== -1) {
+                bookings.splice(bookingIndex, 1);
+                updateDailyAgenda();
+                renderDatePicker(miniCalendarDate);
+            }
+            
             closeModal(); 
             showAlert('Reserva excluída com sucesso!');
         }
@@ -1677,53 +1882,67 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (currentEditingBooking) {
-            await room.collection('booking').upsert({ ...bookingData, id: currentEditingBooking.id });
+            await supabaseUpsert('bookings', { 
+                ...bookingData, 
+                id: currentEditingBooking.id,
+                client_id: bookingData.clientId,
+                event_name: bookingData.eventName,
+                start_time: bookingData.startTime,
+                end_time: bookingData.endTime,
+                payment_method: bookingData.paymentMethod,
+                payment_status: bookingData.paymentStatus,
+                contract_data_url: bookingData.contractDataUrl,
+                event_address: bookingData.eventAddress
+            });
+            
+            // Atualizar estado local
+            const bookingIndex = bookings.findIndex(b => b.id === currentEditingBooking.id);
+            if (bookingIndex !== -1) {
+                bookings[bookingIndex] = { ...bookingData, id: currentEditingBooking.id };
+            }
+            
+            updateDailyAgenda();
+            renderDatePicker(miniCalendarDate);
             showAlert('Reserva atualizada com sucesso!');
         } else {
-            await room.collection('booking').upsert({ ...bookingData, id: String(Date.now()) }); 
+            const newBookingId = String(Date.now());
+            await supabaseUpsert('bookings', { 
+                ...bookingData, 
+                id: newBookingId,
+                client_id: bookingData.clientId,
+                event_name: bookingData.eventName,
+                start_time: bookingData.startTime,
+                end_time: bookingData.endTime,
+                payment_method: bookingData.paymentMethod,
+                payment_status: bookingData.paymentStatus,
+                contract_data_url: bookingData.contractDataUrl,
+                event_address: bookingData.eventAddress
+            }); 
+            
+            // Atualizar estado local
+            bookings.push({ ...bookingData, id: newBookingId });
+            updateDailyAgenda();
+            renderDatePicker(miniCalendarDate);
             showAlert('Reserva adicionada com sucesso!');
         }
 
         closeBookingForm(); 
     }
 
-    function loadAndSubscribeData() {
-        room.collection('client').subscribe(updatedClients => {
-            clients = updatedClients;
-            renderClientsList(); 
-            populateClientsDropdown();
-            renderFinancialReport(); 
-        });
-
-        room.collection('inventory').subscribe(updatedInventory => {
-            inventory = updatedInventory;
-            renderTotalInventory();
-            renderInventoryManagement();
-            renderModalBookingFormItems(currentEditingBooking); 
-            updateModalAvailabilityInfo();
-            renderFinancialReport(); 
-        });
-
-        room.collection('booking').subscribe(updatedBookings => {
-            bookings = updatedBookings;
-            renderBookings();
-            updateDailyAgenda();
-            renderDatePicker(miniCalendarDate); 
-            renderFinancialReport(); 
-        });
-    }
-
-    function renderAll() {
+    // Função para atualizar dados após mudanças
+    function refreshAllData() {
         renderTotalInventory();
-        populateClientsDropdown();
-        renderBookings();
         renderInventoryManagement();
         renderClientsList(); 
-        
-        if (financialPeriodSelect && financialYearSelect) {
-            renderFinancialReport();
-        }
+        populateClientsDropdown();
+        updateDailyAgenda();
+        renderDatePicker(miniCalendarDate);
+        renderFinancialReport();
+        renderModalBookingFormItems(currentEditingBooking); 
+        updateModalAvailabilityInfo();
     }
+
+
 
     function init() {
         // NEW: Check login status on load
@@ -1828,10 +2047,10 @@ document.addEventListener('DOMContentLoaded', () => {
             addItemSection.classList.toggle('hidden');
         });
         
-        loadAndSubscribeData();
-        renderAll(); 
-        updateDailyAgenda();
-        renderDatePicker(miniCalendarDate);
+        // Carregar dados iniciais do Supabase
+        setTimeout(() => {
+            loadInitialData();
+        }, 1000); // Aguardar um pouco para garantir que o Supabase foi carregado
     }
     
     function renderBookings() {
