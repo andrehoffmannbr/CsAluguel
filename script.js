@@ -3,9 +3,12 @@ let supabase;
 
 // Inicializar Supabase
 function initializeSupabase() {
-    // Configuração do Supabase - usar variáveis de ambiente se disponíveis
-    const SUPABASE_URL = window.SUPABASE_URL || 'https://todwaiccuifkhhzzydmk.supabase.co';
-    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NzA4MTAsImV4cCI6MjA2ODM0NjgxMH0.7cLD7-9FIP7KkIdIKMGmP-5OBzW00-3CZP4JOXX7UiU';
+    // Configuração do Supabase - usar variáveis de ambiente da Vercel
+    const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://todwaiccuifkhhzzydmk.supabase.co';
+    const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NzA4MTAsImV4cCI6MjA2ODM0NjgxMH0.7cLD7-9FIP7KkIdIKMGmP-5OBzW00-3CZP4JOXX7UiU';
+    
+    console.log('Supabase URL:', SUPABASE_URL);
+    console.log('Supabase Key:', SUPABASE_ANON_KEY ? 'Key loaded' : 'Key missing');
     
     // Verificar se o Supabase está disponível
     if (typeof window !== 'undefined' && window.supabase) {
