@@ -1,0 +1,655 @@
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Estoque de Eventos</title>
+    <script type="importmap">
+    {
+      "imports": {
+        "@websim/websim-socket": "https://esm.websim.com/@websim/websim-socket"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Login Page -->
+    <div id="login-container">
+        <div class="login-box">
+            <img src="logo.png" alt="CS Logo" class="login-logo">
+            <h2>Login do Sistema</h2>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <p id="login-error-message" class="error-message"></p>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application Content (Initially hidden) -->
+    <div id="main-app-content" style="display: none;">
+        <div id="app">
+            <header>
+                <div class="header-content">
+                    <h1><img src="logo.png" alt="logo" class="logo"> CS Aluguel de Mesa e Pula Pula</h1>
+                    <button id="hamburger-menu" class="hamburger-menu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </div>
+                <div id="total-inventory">
+                    <!-- Estoque total será renderizado pelo JS -->
+                </div>
+                <button id="logout-btn" class="logout-button"><i class="fas fa-sign-out-alt"></i> Sair do Sistema</button>
+            </header>
+
+            <nav id="tabs" class="tabs-nav">
+                <button class="tab-btn active" data-tab="register-client-tab">Cadastrar Cliente</button>
+                <button class="tab-btn" data-tab="clients-tab">Clientes</button>
+                <button class="tab-btn" data-tab="booking-tab">Agendamento</button>
+                <button class="tab-btn" data-tab="reservas-tab">Reservas</button>
+                <button class="tab-btn" data-tab="financial-tab">Financeiro</button>
+                <button class="tab-btn" data-tab="inventory-tab">Estoque</button>
+                
+            </nav>
+
+            <main>
+                <div id="register-client-tab" class="tab-content active">
+                    <section id="add-client-section">
+                        <h2><i class="fas fa-user-plus"></i> Cadastrar Novo Cliente</h2>
+                        <p class="section-description">Preencha os dados abaixo para adicionar um novo cliente ao sistema.</p>
+                        <form id="add-client-form">
+                            <div class="form-section">
+                                <h3><i class="fas fa-id-card"></i> Dados Pessoais</h3>
+                                <div class="form-grid">
+                                    <div class="form-group with-icon">
+                                        <i class="fas fa-user"></i>
+                                        <input type="text" id="client-name" placeholder="Nome Completo" required>
+                                    </div>
+                                    <div class="form-group with-icon">
+                                        <i class="fas fa-phone"></i>
+                                        <input type="tel" id="client-phone" placeholder="Telefone (99) 99999-9999">
+                                    </div>
+                                    <div class="form-group with-icon">
+                                        <i class="fas fa-envelope"></i>
+                                        <input type="email" id="client-email" placeholder="Email (opcional)">
+                                    </div>
+                                    <div class="form-group with-icon">
+                                        <i class="fas fa-id-badge"></i>
+                                        <input type="text" id="client-cpf" placeholder="CPF/CNPJ (opcional)">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section address-section">
+                                <h3 class="address-header"><i class="fas fa-map-marker-alt"></i> Endereço do Cliente</h3>
+                                <div class="form-grid-new">
+                                    <div class="form-group form-group-full">
+                                        <label for="client-zip">CEP</label>
+                                        <input type="text" id="client-zip" placeholder="00000-000">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="client-street">Logradouro (Rua, Av.)</label>
+                                        <input type="text" id="client-street">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="client-number">Número</label>
+                                        <input type="text" id="client-number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="client-complement">Complemento</label>
+                                        <input type="text" id="client-complement">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="client-neighborhood">Bairro</label>
+                                        <input type="text" id="client-neighborhood">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="client-city">Cidade</label>
+                                        <input type="text" id="client-city">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="client-state">Estado</label>
+                                        <input type="text" id="client-state" maxlength="2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section address-section">
+                                <h3 class="address-header"><i class="fas fa-glass-cheers"></i> Endereço da Festa (Opcional)</h3>
+                                <div class="form-grid-new">
+                                    <div class="form-group form-group-full">
+                                        <label for="party-zip">CEP</label>
+                                        <input type="text" id="party-zip" placeholder="00000-000">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="party-street">Logradouro (Rua, Av.)</label>
+                                        <input type="text" id="party-street">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="party-number">Número</label>
+                                        <input type="text" id="party-number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="party-complement">Complemento</label>
+                                        <input type="text" id="party-complement">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="party-neighborhood">Bairro</label>
+                                        <input type="text" id="party-neighborhood">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="party-city">Cidade</label>
+                                        <input type="text" id="party-city">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="party-state">Estado</label>
+                                        <input type="text" id="party-state" maxlength="2">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit"><i class="fas fa-check-circle"></i> Cadastrar Cliente</button>
+                        </form>
+                    </section>
+                </div>
+
+                <div id="clients-tab" class="tab-content">
+                    <section id="clients-list-section">
+                        <h2>Clientes Cadastrados</h2>
+                        <div class="search-input-container form-group">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="client-search-input" placeholder="Pesquisar por nome ou CPF...">
+                        </div>
+                        <div id="clients-list">
+                            <!-- Lista de clientes será renderizada aqui -->
+                        </div>
+                    </section>
+                </div>
+
+                <div id="booking-tab" class="tab-content">
+                    <div class="booking-layout">
+                        <div class="booking-calendar-view">
+                            <div id="mini-calendar-container">
+                                <div class="calendar-header">
+                                    <button type="button" id="prev-month-booking" class="calendar-nav-btn">&lt;</button>
+                                    <span id="current-month-year-booking"></span>
+                                    <button type="button" id="next-month-booking" class="calendar-nav-btn">&gt;</button>
+                                </div>
+                                <div class="calendar-grid">
+                                    <div class="calendar-weekdays">
+                                        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                                    </div>
+                                    <div id="calendar-days-booking" class="calendar-days"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="booking-details-view">
+                            <h2 id="agenda-do-dia-title">Agenda do Dia</h2>
+                            <div id="daily-bookings-container">
+                                <!-- Bookings for selected day will be rendered here -->
+                            </div>
+                            <button id="show-booking-form-btn" class="show-form-btn">+ Novo Agendamento</button>
+                        </div>
+                    </div>
+                     <!-- DEPRECATED: Old booking section, kept for reference only -->
+                     <section id="booking-section" class="booking-form-panel hidden">
+                        <button id="close-booking-form-btn" class="close-booking-form">&times;</button>
+                        <h2>Fazer uma Reserva para <span id="booking-form-date-display"></span></h2>
+                        <form id="booking-form">
+                            <div class="form-group">
+                                <label for="booking-client">Cliente:</label>
+                                <select id="booking-client" required>
+                                    <option value="">Selecione um cliente</option>
+                                    <!-- Clientes serão renderizados pelo JS -->
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="event-name">Nome do Evento:</label>
+                                <input type="text" id="event-name" required>
+                            </div>
+                            <input type="date" id="event-date" required style="display: none;">
+
+                            <!-- New Time Inputs -->
+                            <div class="form-group">
+                                <label for="start-time">Hora de Início:</label>
+                                <input type="time" id="start-time" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="end-time">Hora de Término:</label>
+                                <input type="time" id="end-time" required>
+                            </div>
+
+                            <!-- Event Address Section -->
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="same-address-checkbox">
+                                    <span>Usar endereço do <strong>cadastro do cliente</strong>.</span>
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <input type="checkbox" id="party-address-checkbox">
+                                    <span>Usar endereço da <strong>festa do cliente</strong>.</span>
+                                </label>
+                            </div>
+
+                            <div class="form-section address-section" id="event-address-section">
+                                <h3 class="address-header"><i class="fas fa-map-marker-alt"></i> Endereço do Evento</h3>
+                                <div class="form-grid-new">
+                                    <div class="form-group form-group-full">
+                                        <label for="event-zip">CEP</label>
+                                        <input type="text" id="event-zip" placeholder="00000-000">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="event-street">Logradouro (Rua, Av.)</label>
+                                        <input type="text" id="event-street">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="event-number">Número</label>
+                                        <input type="text" id="event-number">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="event-complement">Complemento</label>
+                                        <input type="text" id="event-complement">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="event-neighborhood">Bairro</label>
+                                        <input type="text" id="event-neighborhood">
+                                    </div>
+                                    <div class="form-group form-group-large">
+                                        <label for="event-city">Cidade</label>
+                                        <input type="text" id="event-city">
+                                    </div>
+                                    <div class="form-group form-group-small">
+                                        <label for="event-state">Estado</label>
+                                        <input type="text" id="event-state" maxlength="2">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="booking-items-container">
+                                <!-- Inputs para itens do inventário serão inseridos aqui -->
+                            </div>
+
+                            <div class="form-group">
+                                <label for="booking-price">Valor Total (R$):</label>
+                                <input type="number" id="booking-price" step="0.01" min="0" placeholder="0,00" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="payment-method">Forma de Pagamento:</label>
+                                <select id="payment-method" required>
+                                    <option value="">Selecione a forma</option>
+                                    <option value="Pix">Pix</option>
+                                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                                    <option value="Cartão de Débito">Cartão de Débito</option>
+                                    <option value="Dinheiro">Dinheiro</option>
+                                    <option value="Transferência">Transferência Bancária</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="payment-status">Status do Pagamento:</label>
+                                <select id="payment-status" required>
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Pago">Pago</option>
+                                    <option value="Parcial">Parcial</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="contract-file">Anexar Contrato (PDF/Imagem):</label>
+                                <input type="file" id="contract-file" accept="application/pdf,image/*">
+                            </div>
+
+                            <div id="availability-info" class="availability-info">Selecione uma data para ver a disponibilidade.</div>
+                            
+                            <button type="submit">Reservar</button>
+                        </form>
+                    </section>
+                </div>
+
+                <div id="reservas-tab" class="tab-content">
+                    <section id="bookings-list-section">
+                        <h2>Reservas Confirmadas</h2>
+                        <ul id="bookings-list"></ul>
+                    </section>
+                </div>
+
+                <div id="inventory-tab" class="tab-content">
+                    <h2 class="inventory-title"><i class="fas fa-boxes"></i> Controle de Estoque</h2>
+
+                    <div class="inventory-dashboard">
+                        <div class="dashboard-card card-total-items">
+                            <div class="card-icon"><i class="fas fa-boxes-stacked"></i></div>
+                            <div class="card-content">
+                                <span class="card-title">TOTAL DE ITENS EM ESTOQUE</span>
+                                <span class="card-value" id="dashboard-total-items">0</span>
+                                <span class="card-subtitle">Unidades disponíveis</span>
+                            </div>
+                        </div>
+                        <div class="dashboard-card card-stock-alert">
+                            <div class="card-icon"><i class="fas fa-triangle-exclamation"></i></div>
+                            <div class="card-content">
+                                <span class="card-title">ITENS COM ALERTA DE ESTOQUE</span>
+                                <span class="card-value" id="dashboard-stock-alert">0</span>
+                                <span class="card-subtitle">Baixo estoque ou esgotados</span>
+                            </div>
+                        </div>
+                        <div class="dashboard-card card-total-value">
+                            <div class="card-icon"><i class="fas fa-dollar-sign"></i></div>
+                            <div class="card-content">
+                                <span class="card-title">VALOR TOTAL DO ESTOQUE</span>
+                                <span class="card-value" id="dashboard-total-value">R$ 0,00</span>
+                                <span class="card-subtitle">Valor de custo dos itens</span>
+                            </div>
+                        </div>
+                        <div class="dashboard-card card-distinct-categories">
+                            <div class="card-icon"><i class="fas fa-layer-group"></i></div>
+                            <div class="card-content">
+                                <span class="card-title">CATEGORIAS DISTINTAS</span>
+                                <span class="card-value" id="dashboard-distinct-categories">0</span>
+                                <span class="card-subtitle">Variedade de produtos</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="inventory-actions">
+                        <button id="toggle-add-item-form-btn"><i class="fas fa-plus-circle"></i> Adicionar Item</button>
+                    </div>
+
+                    <div class="inventory-sections">
+                        <section id="add-item-section" class="hidden">
+                            <h2>Adicionar Novo Item ao Estoque</h2>
+                            <form id="add-item-form">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label for="item-name">Nome do Item:</label>
+                                        <input type="text" id="item-name" placeholder="Ex: Tendas, Cadeiras, Jogos de Mesa..." required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item-quantity">Quantidade:</label>
+                                        <input type="number" id="item-quantity" min="0" value="1" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item-cost">Custo por Item (R$):</label>
+                                        <input type="number" id="item-cost" min="0" step="0.01" value="0" placeholder="0,00">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="item-rental-price">Valor de Aluguel (R$):</label>
+                                        <input type="number" id="item-rental-price" min="0" step="0.01" value="0" placeholder="0,00">
+                                    </div>
+                                </div>
+                                <button type="submit"><i class="fas fa-plus-circle"></i> Adicionar Item ao Estoque</button>
+                            </form>
+                            
+                            <div class="quick-add-items">
+                                <h3>Adicionar Itens Comuns</h3>
+                                <div class="quick-add-grid">
+                                    <button type="button" class="quick-add-btn" data-name="Mesa Redonda" data-quantity="10" data-cost="50" data-rental-price="100">+ Mesa Redonda (10)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Mesa Retangular" data-quantity="15" data-cost="60" data-rental-price="120">+ Mesa Retangular (15)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Cadeira Plástica" data-quantity="100" data-cost="15" data-rental-price="30">+ Cadeira Plástica (100)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Toalha de Mesa" data-quantity="25" data-cost="10" data-rental-price="20">+ Toalha de Mesa (25)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Tenda 3x3" data-quantity="5" data-cost="300" data-rental-price="600">+ Tenda 3x3 (5)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Pula Pula" data-quantity="2" data-cost="1500" data-rental-price="200">+ Pula Pula (2)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Jogo de Mesa" data-quantity="20" data-cost="80" data-rental-price="150">+ Jogo de Mesa (20)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Aparelho de Som" data-quantity="3" data-cost="500" data-rental-price="1000">+ Aparelho de Som (3)</button>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <section id="inventory-management-section">
+                            <h2>Gerenciar Estoque Atual</h2>
+                            <div id="inventory-list">
+                                <!-- Itens do inventário serão listados aqui -->
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div id="financial-tab" class="tab-content">
+                    <section id="financial-section">
+                        <h2><i class="fas fa-chart-line"></i> Painel Financeiro</h2>
+                        <div class="financial-filters">
+                            <div class="form-group">
+                                <label for="financial-period">Período:</label>
+                                <select id="financial-period">
+                                    <option value="monthly">Mês atual</option>
+                                    <option value="quarterly">Trimestral</option>
+                                    <option value="yearly">Anual</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="financial-year">Ano:</label>
+                                <select id="financial-year">
+                                    <!-- Anos serão populados pelo JS -->
+                                </select>
+                            </div>
+                             <button id="update-financial-report-btn"><i class="fas fa-sync-alt"></i> Atualizar</button>
+                        </div>
+                        <div id="financial-summary" class="financial-summary-grid">
+                            <!-- Resumo financeiro será renderizado aqui -->
+                        </div>
+                        <div id="financial-details" class="financial-details">
+                            <!-- Detalhes financeiros serão renderizados aqui -->
+                        </div>
+                        <button id="print-financial-report-btn"><i class="fas fa-print"></i> Imprimir Relatório Financeiro</button>
+                    </section>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal para detalhes da reserva -->
+    <div id="booking-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2 id="modal-event-name"></h2>
+            <p><strong>Cliente:</strong> <span id="modal-client-name"></span></p>
+            <p><strong>Data:</strong> <span id="modal-event-date"></span></p>
+            <p><strong>Horário:</strong> <span id="modal-event-time"></span></p>
+            <p><strong>Endereço do Evento:</strong> <span id="modal-event-address"></span></p>
+            <p><strong>Valor:</strong> <span id="modal-price"></span></p>
+            <p><strong>Forma de Pagamento:</strong> <span id="modal-payment-method"></span></p>
+            <p><strong>Status do Pagamento:</strong> <span id="modal-payment-status"></span></p>
+            <p><strong>Itens Reservados:</strong></p>
+            <ul id="modal-items-list"></ul>
+            <p><strong>Contrato:</strong> <a id="modal-contract-link" href="#" target="_blank" rel="noopener noreferrer">Ver Contrato</a></p>
+            <div class="modal-actions">
+                <button id="modal-edit-booking-btn" class="modal-action-btn edit-btn"><i class="fas fa-edit"></i> Editar</button>
+                <button id="modal-cancel-booking-btn" class="modal-action-btn cancel-btn"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ADICIONAR reserva -->
+    <div id="add-booking-modal" class="modal">
+        <div class="modal-content modal-form">
+            <span class="close-button">&times;</span>
+            <h2 id="add-booking-modal-title">Novo Agendamento</h2>
+            <form id="add-booking-form">
+                <input type="hidden" id="add-booking-date">
+                
+                <div class="form-group">
+                    <label for="add-booking-client">Cliente</label>
+                    <select id="add-booking-client" required>
+                        <option value="">Selecione um cliente</option>
+                        <!-- Clientes serão renderizados pelo JS -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-booking-date-display">Data</label>
+                    <input type="text" id="add-booking-date-display" readonly>
+                </div>
+
+                <div class="form-grid-time">
+                    <div class="form-group">
+                        <label for="add-booking-start-time">Hora de Início</label>
+                        <input type="time" id="add-booking-start-time" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="add-booking-end-time">Hora de Término</label>
+                        <input type="time" id="add-booking-end-time" required>
+                    </div>
+                </div>
+
+                <div id="modal-availability-info" class="availability-info">Preencha data e horários para ver a disponibilidade.</div>
+                 
+                <div class="form-group">
+                    <label for="add-event-name">Nome do Evento/Serviço</label>
+                    <input type="text" id="add-event-name" required>
+                </div>
+
+                <!-- Event Address Section in ADD/EDIT booking modal -->
+                <div class="form-group booking-address-check">
+                    <label class="radio-label">
+                        <input type="radio" id="add-booking-same-address-radio" name="booking-address-option" value="client-address">
+                        <span>Usar endereço do <strong>cadastro do cliente</strong>.</span>
+                    </label>
+                </div>
+                <div class="form-group booking-address-check">
+                    <label class="radio-label">
+                        <input type="radio" id="add-booking-party-address-radio" name="booking-address-option" value="party-address">
+                        <span>Usar endereço da <strong>festa do cliente</strong>.</span>
+                    </label>
+                </div>
+                <div class="form-group booking-address-check">
+                    <label class="radio-label">
+                        <input type="radio" id="add-booking-manual-address-radio" name="booking-address-option" value="manual-address" checked>
+                        <span>Informar <strong>Endereço do Evento</strong> manualmente.</span>
+                    </label>
+                </div>
+
+                <div class="form-section address-section" id="add-booking-event-address-section">
+                    <h3 class="address-header"><i class="fas fa-map-marker-alt"></i> Endereço do Evento</h3>
+                    <div class="form-grid-new">
+                        <div class="form-group form-group-full">
+                            <label for="add-event-zip">CEP</label>
+                            <input type="text" id="add-event-zip" placeholder="00000-000">
+                        </div>
+                        <div class="form-group form-group-large">
+                            <label for="add-event-street">Logradouro (Rua, Av.)</label>
+                            <input type="text" id="add-event-street">
+                        </div>
+                        <div class="form-group form-group-small">
+                            <label for="add-event-number">Número</label>
+                            <input type="text" id="add-event-number">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-event-complement">Complemento</label>
+                            <input type="text" id="add-event-complement">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-event-neighborhood">Bairro</label>
+                            <input type="text" id="add-event-neighborhood">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-event-city">Cidade</label>
+                            <input type="text" id="add-event-city">
+                        </div>
+                        <div class="form-group form-group-small">
+                            <label for="add-event-state">Estado</label>
+                            <input type="text" id="add-event-state" maxlength="2">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add-booking-items-container" class="item-selection-grid">
+                    <!-- Inputs para itens do inventário serão inseridos aqui -->
+                </div>
+
+                <div class="form-group item-total-value">
+                    <label>Valor dos Itens (Estimado):</label>
+                    <span id="add-booking-items-total-value">R$ 0,00</span>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-booking-price">Valor Total (R$)</label>
+                    <input type="number" id="add-booking-price" step="0.01" min="0" placeholder="0,00" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-booking-payment-method">Forma de Pagamento:</label>
+                    <select id="add-booking-payment-method" required>
+                        <option value="">Selecione a forma</option>
+                        <option value="Pix">Pix</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Transferência">Transferência Bancária</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-booking-payment-status">Status do Pagamento:</label>
+                    <select id="add-booking-payment-status" required>
+                        <option value="Pendente">Pendente</option>
+                        <option value="Pago">Pago</option>
+                        <option value="Parcial">Parcial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="add-booking-observations">Observações</label>
+                    <textarea id="add-booking-observations" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="send-email-confirmation">
+                        <span>Enviar confirmação por email ao cliente</span>
+                    </label>
+                </div>
+                
+                <button type="submit" id="add-booking-submit-btn">Agendar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para confirmar adição de item ao estoque -->
+    <div id="confirm-add-item-modal" class="modal">
+        <div class="modal-content modal-confirm">
+            <span class="close-button">&times;</span>
+            <h2><i class="fas fa-question-circle"></i> Confirmar Novo Item</h2>
+            <p class="confirm-text">Você está prestes a adicionar o seguinte item ao estoque. Por favor, confirme os detalhes:</p>
+            <div class="confirm-details">
+                <p><strong>Nome do Item:</strong> <span id="confirm-item-name"></span></p>
+                <p><strong>Quantidade:</strong> <span id="confirm-item-quantity"></span></p>
+                <p><strong>Custo por Item:</strong> <span id="confirm-item-cost"></span></p>
+                <p><strong>Valor de Aluguel:</strong> <span id="confirm-item-rental-price"></span></p>
+            </div>
+            <div class="confirm-actions">
+                <button id="confirm-add-item-btn"><i class="fas fa-check-circle"></i> Confirmar</button>
+                <button id="cancel-add-item-btn" class="cancel-btn"><i class="fas fa-times-circle"></i> Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generic Alert/Confirm Modal -->
+    <div id="custom-alert-confirm-modal" class="modal">
+        <div class="modal-content modal-confirm">
+            <span class="close-button" id="custom-alert-confirm-close-btn">&times;</span>
+            <h2 id="custom-alert-confirm-title"></h2>
+            <p class="confirm-text" id="custom-alert-confirm-message"></p>
+            <div class="confirm-actions" id="custom-alert-confirm-actions">
+                <!-- Buttons will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    <!--
+        To run this project directly in VS Code:
+        1. Make sure you have the "Live Server" extension installed (search for "ritwickdey.liveserver" in VS Code extensions).
+        2. Right-click on this 'index.html' file in the VS Code Explorer.
+        3. Select "Open with Live Server".
+        This will open the application in your default web browser at a local address (e.g., http://127.0.0.1:5500/).
+        The application will connect to your Websim backend for data persistence.
+    -->
+</body>
+</html>

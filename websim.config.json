@@ -1,0 +1,114 @@
+{
+  "database": {
+    "schema": {
+      "client": {
+        "id": {
+          "type": "text",
+          "description": "Unique identifier for the client (generated from Date.now() or existing numeric ID converted to string)"
+        },
+        "name": {
+          "type": "text",
+          "description": "Full name of the client"
+        },
+        "phone": {
+          "type": "text",
+          "description": "Client's phone number"
+        },
+        "email": {
+          "type": "text",
+          "description": "Client's email address (optional)"
+        },
+        "cpf": {
+          "type": "text",
+          "description": "Client's CPF/CNPJ (optional)"
+        },
+        "address": {
+          "type": "jsonb",
+          "description": "Client's main address details"
+        },
+        "partyAddress": {
+          "type": "jsonb",
+          "description": "Client's party address details (optional)"
+        }
+      },
+      "inventory": {
+        "id": {
+          "type": "text",
+          "description": "Unique identifier for the inventory item (slugified name)"
+        },
+        "name": {
+          "type": "text",
+          "description": "Name of the inventory item"
+        },
+        "quantity": {
+          "type": "integer",
+          "description": "Current quantity of the item in stock"
+        },
+        "cost": {
+          "type": "numeric",
+          "description": "Cost per unit of the item (internal cost)"
+        },
+        "rentalPrice": {
+          "type": "numeric",
+          "description": "Rental price per unit of the item charged to clients"
+        }
+      },
+      "booking": {
+        "id": {
+          "type": "text",
+          "description": "Unique identifier for the booking"
+        },
+        "clientId": {
+          "type": "text",
+          "description": "ID of the client who made the booking"
+        },
+        "eventName": {
+          "type": "text",
+          "description": "Name of the event or service booked"
+        },
+        "date": {
+          "type": "text",
+          "description": "Date of the event (YYYY-MM-DD)"
+        },
+        "startTime": {
+          "type": "text",
+          "description": "Start time of the event (HH:MM)"
+        },
+        "endTime": {
+          "type": "text",
+          "description": "End time of the event (HH:MM)"
+        },
+        "items": {
+          "type": "jsonb",
+          "description": "JSON object of items booked, with item ID as key and quantity as value"
+        },
+        "price": {
+          "type": "numeric",
+          "description": "Total price of the booking (negotiated client price)"
+        },
+        "paymentMethod": {
+          "type": "text",
+          "description": "Payment method used (Pix, Credit Card, etc.)"
+        },
+        "paymentStatus": {
+          "type": "text",
+          "description": "Status of the payment (Pendente, Pago, Parcial)"
+        },
+        "contractDataUrl": {
+          "type": "text",
+          "description": "URL for the attached contract file (optional)"
+        },
+        "eventAddress": {
+          "type": "jsonb",
+          "description": "Address where the event will take place"
+        },
+        "observations": {
+          "type": "text",
+          "description": "Any additional observations for the booking"
+        }
+      }
+    },
+    "instructions": "This database manages clients, inventory, and event bookings for 'CS Aluguel de Mesa e Pula Pula'. Client IDs, booking IDs, and item IDs are stored as text. Bookings store `clientId` as text to link to client records. 'items' in bookings are stored as a JSONB object mapping inventory item IDs to quantities. 'cost' in inventory is the internal purchase cost, while 'rentalPrice' is the price charged to the client for rental."
+  }
+}
+
