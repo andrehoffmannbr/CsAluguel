@@ -711,7 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 state: clientStateInput.value.trim(),
                 zip: clientZipInput.value.trim(),
             },
-            partyAddress: {
+            party_address: {
                 street: partyStreetInput.value.trim(),
                 number: partyNumberInput.value.trim(),
                 complement: partyComplementInput.value.trim(),
@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await supabaseUpsert('clients', { 
                 ...clientData, 
                 id: currentEditingClient.id,
-                party_address: clientData.partyAddress 
+                
             });
             
             // Atualizar estado local
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await supabaseUpsert('clients', { 
                 ...clientData, 
                 id: newClientId,
-                party_address: clientData.partyAddress 
+             
             });
             
             // Atualizar estado local
