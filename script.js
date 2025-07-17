@@ -1882,7 +1882,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const bookingData = {
-            clientId: String(clientId),
+            client_id: String(clientId),
             eventName,
             date,
             startTime,
@@ -1900,7 +1900,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await supabaseUpsert('bookings', { 
                 ...bookingData, 
                 id: currentEditingBooking.id,
-                client_id: bookingData.clientId,
+                client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime,
@@ -1924,7 +1924,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await supabaseUpsert('bookings', { 
                 ...bookingData, 
                 id: newBookingId,
-                client_id: bookingData.clientId,
+                client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
                 start_time: bookingData.startTime,
                 end_time: bookingData.endTime,
