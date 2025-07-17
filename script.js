@@ -3,17 +3,26 @@ let supabase;
 
 // Inicializar Supabase
 function initializeSupabase() {
-    // Configuração do Supabase - usar variáveis injetadas no HTML
-    const SUPABASE_URL = window.SUPABASE_URL || 'https://todwaiccuifkhhzzydmk.supabase.co';
-    const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI3NzA4MTAsImV4cCI6MjA2ODM0NjgxMH0.7cLD7-9FIP7KkIdIKMGmP-5OBzW00-3CZP4JOXX7UiU';
+    // Configuração do Supabase - usar apenas variáveis injetadas no HTML
+    const SUPABASE_URL = window.SUPABASE_URL;
+    const SUPABASE_SERVICE_KEY = window.SUPABASE_SERVICE_KEY;
+    
+    // Verificar se as variáveis estão disponíveis
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+        console.error('Supabase configuration missing:', {
+            url: SUPABASE_URL ? 'OK' : 'MISSING',
+            key: SUPABASE_SERVICE_KEY ? 'OK' : 'MISSING'
+        });
+        return;
+    }
     
     console.log('Supabase URL:', SUPABASE_URL);
-    console.log('Supabase Key:', SUPABASE_ANON_KEY ? 'Key loaded' : 'Key missing');
+    console.log('Supabase Service Key: Loaded successfully');
     
     // Verificar se o Supabase está disponível
     if (typeof window !== 'undefined' && window.supabase) {
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        console.log('Supabase client initialized successfully');
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+        console.log('Supabase client initialized successfully with service role key');
     } else {
         console.error('Supabase library not loaded');
     }

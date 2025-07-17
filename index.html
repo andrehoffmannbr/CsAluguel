@@ -7,7 +7,14 @@
     <script>
         // Definir variáveis do Supabase no window para acesso no cliente
         window.SUPABASE_URL = 'https://todwaiccuifkhhzzydmk.supabase.co';
-        window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjc3MDgxMCwiZXhwIjoyMDY4MzQ2ODEwfQ.tLioipNeybv6CdkkxYI4My7oZG3h6gs7W2WoAbI6JtU';
+        window.SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRvZHdhaWNjdWlka2hoenp5ZG1rIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Mjc3MDgxMCwiZXhwIjoyMDY4MzQ2ODEwfQ.tLioipNeybv6CdkkxYI4My7oZG3h6gs7W2WoAbI6JtU';
+        
+        // Verificar se as variáveis foram carregadas corretamente
+        console.log('Supabase config loaded:', {
+            url: window.SUPABASE_URL ? 'OK' : 'MISSING',
+            key: window.SUPABASE_SERVICE_KEY ? 'OK' : 'MISSING',
+            keyLength: window.SUPABASE_SERVICE_KEY ? window.SUPABASE_SERVICE_KEY.length : 0
+        });
     </script>
     
     <!-- Supabase Library -->
