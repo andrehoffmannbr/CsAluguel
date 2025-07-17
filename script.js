@@ -1,6 +1,121 @@
 // Configuração do Supabase
 let supabase;
 
+// Funções de mapeamento camelCase ↔ snake_case
+function toSnakeCase(obj) {
+    const snakeCaseObj = {};
+    Object.entries(obj).forEach(([key, value]) => {
+        const snakeKey = key
+            .replace(/([A-Z])/g, '_$1')
+            .toLowerCase()
+            .replace(/^_/, '');
+        snakeCaseObj[snakeKey] = value;
+    });
+    return snakeCaseObj;
+}
+
+function toCamelCase(obj) {
+    const camelCaseObj = {};
+    Object.entries(obj).forEach(([key, value]) => {
+        const camelKey = key.replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
+        camelCaseObj[camelKey] = value;
+    });
+    return camelCaseObj;
+}
+
+// Mapeamento específico para cada tabela
+function mapClientToSnakeCase(client) {
+    return {
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email,
+        cpf: client.cpf,
+        address: client.address,
+        party_address: client.partyAddress,
+        created_at: client.createdAt,
+        updated_at: client.updatedAt
+    };
+}
+
+function mapClientFromSnakeCase(client) {
+    return {
+        id: client.id,
+        name: client.name,
+        phone: client.phone,
+        email: client.email,
+        cpf: client.cpf,
+        address: client.address,
+        partyAddress: client.party_address,
+        createdAt: client.created_at,
+        updatedAt: client.updated_at
+    };
+}
+
+function mapInventoryToSnakeCase(item) {
+    return {
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        cost: item.cost,
+        rental_price: item.rentalPrice,
+        created_at: item.createdAt,
+        updated_at: item.updatedAt
+    };
+}
+
+function mapInventoryFromSnakeCase(item) {
+    return {
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        cost: item.cost,
+        rentalPrice: item.rental_price,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+    };
+}
+
+function mapBookingToSnakeCase(booking) {
+    return {
+        id: booking.id,
+        client_id: booking.clientId,
+        event_name: booking.eventName,
+        date: booking.date,
+        start_time: booking.startTime,
+        end_time: booking.endTime,
+        items: booking.items,
+        price: booking.price,
+        payment_method: booking.paymentMethod,
+        payment_status: booking.paymentStatus,
+        contract_data_url: booking.contractDataUrl,
+        event_address: booking.eventAddress,
+        observations: booking.observations,
+        created_at: booking.createdAt,
+        updated_at: booking.updatedAt
+    };
+}
+
+function mapBookingFromSnakeCase(booking) {
+    return {
+        id: booking.id,
+        clientId: booking.client_id,
+        eventName: booking.event_name,
+        date: booking.date,
+        startTime: booking.start_time,
+        endTime: booking.end_time,
+        items: booking.items,
+        price: booking.price,
+        paymentMethod: booking.payment_method,
+        paymentStatus: booking.payment_status,
+        contractDataUrl: booking.contract_data_url,
+        eventAddress: booking.event_address,
+        observations: booking.observations,
+        createdAt: booking.created_at,
+        updatedAt: booking.updated_at
+    };
+}
+
 // Inicializar Supabase
 function initializeSupabase() {
     // Configuração do Supabase - usar apenas variáveis injetadas no HTML
@@ -42,7 +157,22 @@ async function supabaseSelect(table, filters = {}) {
         
         const { data, error } = await query;
         if (error) throw error;
-        return data || [];
+        
+        // Converter dados do snake_case para camelCase
+        const mappedData = (data || []).map(item => {
+            switch (table) {
+                case 'clients':
+                    return mapClientFromSnakeCase(item);
+                case 'inventory':
+                    return mapInventoryFromSnakeCase(item);
+                case 'bookings':
+                    return mapBookingFromSnakeCase(item);
+                default:
+                    return toCamelCase(item);
+            }
+        });
+        
+        return mappedData;
     } catch (error) {
         console.error(`Error selecting from ${table}:`, error);
         return [];
@@ -51,13 +181,55 @@ async function supabaseSelect(table, filters = {}) {
 
 async function supabaseUpsert(table, data) {
     try {
+        // Converter dados do camelCase para snake_case
+        const mappedData = Array.isArray(data) 
+            ? data.map(item => {
+                switch (table) {
+                    case 'clients':
+                        return mapClientToSnakeCase(item);
+                    case 'inventory':
+                        return mapInventoryToSnakeCase(item);
+                    case 'bookings':
+                        return mapBookingToSnakeCase(item);
+                    default:
+                        return toSnakeCase(item);
+                }
+            })
+            : (() => {
+                switch (table) {
+                    case 'clients':
+                        return mapClientToSnakeCase(data);
+                    case 'inventory':
+                        return mapInventoryToSnakeCase(data);
+                    case 'bookings':
+                        return mapBookingToSnakeCase(data);
+                    default:
+                        return toSnakeCase(data);
+                }
+            })();
+        
         const { data: result, error } = await supabase
             .from(table)
-            .upsert(data)
+            .upsert(mappedData)
             .select();
         
         if (error) throw error;
-        return result;
+        
+        // Converter resultado de volta para camelCase
+        const mappedResult = (result || []).map(item => {
+            switch (table) {
+                case 'clients':
+                    return mapClientFromSnakeCase(item);
+                case 'inventory':
+                    return mapInventoryFromSnakeCase(item);
+                case 'bookings':
+                    return mapBookingFromSnakeCase(item);
+                default:
+                    return toCamelCase(item);
+            }
+        });
+        
+        return Array.isArray(data) ? mappedResult : mappedResult[0];
     } catch (error) {
         console.error(`Error upserting to ${table}:`, error);
         throw error;
@@ -254,45 +426,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // Carregar inventário
-            const inventoryData = await supabaseSelect('inventory');
-            inventory = inventoryData.map(item => ({
-                id: item.id,
-                name: item.name,
-                quantity: item.quantity,
-                cost: item.cost,
-                rentalPrice: item.rental_price
-            }));
+            // Carregar inventário - já mapeado automaticamente pelas funções CRUD
+            inventory = await supabaseSelect('inventory');
 
-            // Carregar clientes
-            const clientsData = await supabaseSelect('clients');
-            clients = clientsData.map(client => ({
-                id: client.id,
-                name: client.name,
-                phone: client.phone,
-                email: client.email,
-                cpf: client.cpf,
-                address: client.address || {},
-                partyAddress: client.party_address || {}
-            }));
+            // Carregar clientes - já mapeado automaticamente pelas funções CRUD
+            clients = await supabaseSelect('clients');
 
-            // Carregar reservas
-            const bookingsData = await supabaseSelect('bookings');
-            bookings = bookingsData.map(booking => ({
-                id: booking.id,
-                clientId: booking.client_id,
-                eventName: booking.event_name,
-                date: booking.date,
-                startTime: booking.start_time,
-                endTime: booking.end_time,
-                items: booking.items || {},
-                price: parseFloat(booking.price) || 0,
-                paymentMethod: booking.payment_method,
-                paymentStatus: booking.payment_status,
-                contractDataUrl: booking.contract_data_url,
-                eventAddress: booking.event_address || {},
-                observations: booking.observations
-            }));
+            // Carregar reservas - já mapeado automaticamente pelas funções CRUD
+            bookings = await supabaseSelect('bookings');
 
             // Renderizar interfaces
             renderTotalInventory();
