@@ -77,9 +77,15 @@ function mapInventoryFromSnakeCase(item) {
 }
 
 function mapBookingToSnakeCase(booking) {
+    // Verificar se clientId existe e é válido
+    if (!booking.clientId && !booking.client_id) {
+        console.error('Erro no mapeamento: booking sem clientId/client_id válido', booking);
+        throw new Error('ID do cliente não pode ser vazio na conversão para snake_case');
+    }
+    
     return {
         id: booking.id,
-        client_id: booking.clientId,
+        client_id: booking.client_id || booking.clientId, // Aceita tanto camelCase quanto snake_case
         event_name: booking.eventName,
         date: booking.date,
         start_time: booking.startTime,
@@ -179,8 +185,19 @@ async function supabaseSelect(table, filters = {}) {
     }
 }
 
-async function supabaseUpsert(table, data) {
+    async function supabaseUpsert(table, data) {
     try {
+        // Verificação adicional para client_id em tabela de bookings
+        if (table === 'bookings') {
+            const dataToCheck = Array.isArray(data) ? data : [data];
+            for (const item of dataToCheck) {
+                if (!item.client_id && !item.clientId) {
+                    console.error('Tentativa de upsert em bookings com client_id inválido:', item);
+                    throw new Error('Erro: client_id não pode ser vazio em bookings');
+                }
+            }
+        }
+        
         // Converter dados do camelCase para snake_case
         const mappedData = Array.isArray(data) 
             ? data.map(item => {
@@ -207,6 +224,17 @@ async function supabaseUpsert(table, data) {
                         return toSnakeCase(data);
                 }
             })();
+            
+        // Verificação final após o mapeamento para snake_case
+        if (table === 'bookings') {
+            const dataToVerify = Array.isArray(mappedData) ? mappedData : [mappedData];
+            for (const item of dataToVerify) {
+                if (!item.client_id) {
+                    console.error('Erro após mapeamento: client_id inválido:', item);
+                    throw new Error('Erro: client_id não pode ser vazio após mapeamento em bookings');
+                }
+            }
+        }
         
         const { data: result, error } = await supabase
             .from(table)
@@ -1946,6 +1974,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const paymentMethod = addBookingPaymentMethodInput.value; 
         const paymentStatus = addBookingPaymentStatusInput.value; 
 
+        // Validação específica e robusta para client_id
+        if (!clientId || clientId === "" || clientId === undefined || clientId === null) {
+            showAlert('Selecione um cliente antes de agendar!');
+            console.error('Tentativa de agendamento com cliente inválido:', clientId);
+            return;
+        }
+
         const items = {};
         let totalItemsRequested = 0;
         const inputs = addBookingItemsContainer.querySelectorAll('input[type="number"]');
@@ -1958,8 +1993,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (!eventName || !date || !startTime || !endTime || !clientId) {
-            showAlert('Por favor, preencha todos os campos obrigatórios (Evento, Data, Horário e Cliente).');
+        if (!eventName || !date || !startTime || !endTime) {
+            showAlert('Por favor, preencha todos os campos obrigatórios (Evento, Data e Horário).');
             return;
         }
         if (!paymentMethod) { 
@@ -2022,8 +2057,16 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
+        // Garantir que client_id seja uma string válida
+        const safeClientId = clientId ? String(clientId) : null;
+        if (!safeClientId) {
+            showAlert('ID do cliente inválido. Por favor, selecione um cliente.');
+            console.error('Falha na conversão do ID do cliente para string:', clientId);
+            return;
+        }
+
         const bookingData = {
-            client_id: String(clientId),
+            client_id: safeClientId,
             eventName,
             date,
             startTime,
@@ -2036,6 +2079,8 @@ document.addEventListener('DOMContentLoaded', () => {
             eventAddress: eventAddress, 
             observations: observations
         };
+        
+        console.log('Booking Data antes do upsert:', bookingData);
 
         if (currentEditingBooking) {
             await supabaseUpsert('bookings', { 
