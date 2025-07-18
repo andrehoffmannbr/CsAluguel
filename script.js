@@ -2096,14 +2096,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 event_address: bookingData.eventAddress
             });
             
-            // Atualizar estado local
-            const bookingIndex = bookings.findIndex(b => b.id === currentEditingBooking.id);
-            if (bookingIndex !== -1) {
-                bookings[bookingIndex] = { ...bookingData, id: currentEditingBooking.id };
-            }
-            
-            updateDailyAgenda();
-            renderDatePicker(miniCalendarDate);
+            // Recarregar dados e atualizar interface
+            await loadInitialData();
             showAlert('Reserva atualizada com sucesso!');
         } else {
             const newBookingId = String(Date.now());
@@ -2120,10 +2114,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 event_address: bookingData.eventAddress
             }); 
             
-            // Atualizar estado local
-            bookings.push({ ...bookingData, id: newBookingId });
-            updateDailyAgenda();
-            renderDatePicker(miniCalendarDate);
+            // Recarregar dados e atualizar interface
+            await loadInitialData();
             showAlert('Reserva adicionada com sucesso!');
         }
 
