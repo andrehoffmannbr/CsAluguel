@@ -470,6 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
             populateClientsDropdown();
             updateDailyAgenda();
             renderDatePicker(miniCalendarDate);
+            renderBookings(); // Adicionado para atualizar a aba 'Reservas Confirmadas'
             initializeFinancialTab();
 
         } catch (error) {
@@ -1694,6 +1695,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 bookings.splice(bookingIndex, 1);
                 updateDailyAgenda();
                 renderDatePicker(miniCalendarDate);
+                renderBookings(); // Adicionado para atualizar a aba 'Reservas Confirmadas'
             }
             
             closeModal(); 
@@ -2130,6 +2132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateClientsDropdown();
         updateDailyAgenda();
         renderDatePicker(miniCalendarDate);
+        renderBookings(); // Adicionado para atualizar a aba 'Reservas Confirmadas'
         renderFinancialReport();
         renderModalBookingFormItems(currentEditingBooking); 
         updateModalAvailabilityInfo();
