@@ -88,10 +88,8 @@ function mapBookingToSnakeCase(booking) {
         client_id: booking.client_id || booking.clientId, // Aceita tanto camelCase quanto snake_case
         event_name: booking.eventName,
         date: booking.date,
-        start_date: booking.startDate,
-        end_date: booking.endDate,
-        start_time: booking.startTime, // manter para compatibilidade
-        end_time: booking.endTime,     // manter para compatibilidade
+        start_time: booking.startDate, // Usar start_time para data de início
+        end_time: booking.endDate,     // Usar end_time para data de fim
         items: booking.items,
         price: booking.price,
         payment_method: booking.paymentMethod,
@@ -110,10 +108,10 @@ function mapBookingFromSnakeCase(booking) {
         clientId: booking.client_id,
         eventName: booking.event_name,
         date: booking.date,
-        startDate: booking.start_date,
-        endDate: booking.end_date,
-        startTime: booking.start_time, // manter para compatibilidade
-        endTime: booking.end_time,     // manter para compatibilidade
+        startDate: booking.start_time, // Mapear start_time para startDate 
+        endDate: booking.end_time,     // Mapear end_time para endDate
+        startTime: booking.start_time, // manter para compatibilidade com código que ainda usa startTime
+        endTime: booking.end_time,     // manter para compatibilidade com código que ainda usa endTime
         items: booking.items,
         price: booking.price,
         paymentMethod: booking.payment_method,
@@ -1494,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 sortedPeriodBookings.forEach(booking => {
-                    const client = clients.find(c => String(c.id) === String(booking.client_id)); 
+                    const client = clients.find(c => String(c.id) === String(booking.clientId)); 
                     const itemsBooked = Object.entries(booking.items)
                         .filter(([, quantity]) => quantity > 0)
                         .map(([itemId, quantity]) => {
@@ -1571,10 +1569,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             bookingsOnDate.forEach(booking => {
                 // Debug para identificar problemas de ID
-                console.log('Booking client_id:', booking.client_id, typeof booking.client_id);
+                console.log('Booking clientId:', booking.clientId, typeof booking.clientId);
                 console.log('Available clients:', clients.map(c => ({id: c.id, name: c.name, type: typeof c.id})));
                 
-                const client = clients.find(c => String(c.id) === String(booking.client_id)); 
+                const client = clients.find(c => String(c.id) === String(booking.clientId)); 
                 const itemEl = document.createElement('div');
                 itemEl.className = 'daily-booking-item';
 
@@ -1743,7 +1741,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openModal(booking) {
-        const client = clients.find(c => String(c.id) === String(booking.client_id)); 
+        const client = clients.find(c => String(c.id) === String(booking.clientId)); 
 
         modalEventName.textContent = booking.eventName;
         modalClientName.textContent = client ? client.name : 'Cliente não encontrado';
@@ -1889,7 +1887,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (addBookingEndDateInput) addBookingEndDateInput.value = bookingToEdit.endDate || bookingToEdit.date;
             if (addEventNameInput) addEventNameInput.value = bookingToEdit.eventName;
             if (addBookingPriceInput) addBookingPriceInput.value = bookingToEdit.price || 0;
-            if (addBookingClientSelect) addBookingClientSelect.value = bookingToEdit.client_id;
+            if (addBookingClientSelect) addBookingClientSelect.value = bookingToEdit.clientId;
             if (addBookingPaymentMethodInput) addBookingPaymentMethodInput.value = bookingToEdit.paymentMethod || ''; 
             if (addBookingPaymentStatusInput) addBookingPaymentStatusInput.value = bookingToEdit.paymentStatus || ''; 
             if (addBookingObservationsInput) addBookingObservationsInput.value = bookingToEdit.observations || '';
@@ -2152,8 +2150,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: currentEditingBooking.id,
                 client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
-                start_date: bookingData.startDate,
-                end_date: bookingData.endDate,
+                start_time: bookingData.startDate,
+                end_time: bookingData.endDate,
                 payment_method: bookingData.paymentMethod,
                 payment_status: bookingData.paymentStatus,
                 contract_data_url: bookingData.contractDataUrl,
@@ -2170,8 +2168,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: newBookingId,
                 client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
-                start_date: bookingData.startDate,
-                end_date: bookingData.endDate,
+                start_time: bookingData.startDate,
+                end_time: bookingData.endDate,
                 payment_method: bookingData.paymentMethod,
                 payment_status: bookingData.paymentStatus,
                 contract_data_url: bookingData.contractDataUrl,
@@ -2329,7 +2327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         sortedBookings.forEach(booking => {
-            const client = clients.find(c => String(c.id) === String(booking.client_id)); 
+            const client = clients.find(c => String(c.id) === String(booking.clientId)); 
             const li = document.createElement('li');
             li.setAttribute('data-booking-id', booking.id);
 
