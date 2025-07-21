@@ -1628,6 +1628,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateModalAvailabilityInfo() {
+        // Validação defensiva para garantir que elementos existem
+        if (!addBookingDateInput || !addBookingStartTimeInput || !addBookingEndTimeInput || !addBookingForm) {
+            console.warn('Elementos do modal de agendamento não encontrados');
+            return;
+        }
+        
         const date = addBookingDateInput.value;
         const startTime = addBookingStartTimeInput.value;
         const endTime = addBookingEndTimeInput.value;
@@ -1636,20 +1642,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const excludeId = currentEditingBooking ? currentEditingBooking.id : null;
         
         if (!date || !startTime || !endTime) {
-            modalAvailabilityInfo.textContent = 'Preencha a data e os horários para verificar a disponibilidade.';
-            modalAvailabilityInfo.className = 'availability-info';
-            submitBtn.disabled = true;
-            submitBtn.textContent = currentEditingBooking ? 'Preencha horários para atualizar' : 'Preencha os horários';
-            addBookingItemsContainer.querySelectorAll('input').forEach(input => input.removeAttribute('max'));
+            if (modalAvailabilityInfo) {
+                modalAvailabilityInfo.textContent = 'Preencha a data e os horários para verificar a disponibilidade.';
+                modalAvailabilityInfo.className = 'availability-info';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = currentEditingBooking ? 'Preencha horários para atualizar' : 'Preencha os horários';
+            }
+            if (addBookingItemsContainer) {
+                addBookingItemsContainer.querySelectorAll('input').forEach(input => input.removeAttribute('max'));
+            }
             updateModalItemsTotalValue(); 
             return;
         }
         
         if (endTime <= startTime) {
-            modalAvailabilityInfo.textContent = 'A hora de término deve ser depois da hora de início.';
-            modalAvailabilityInfo.className = 'availability-info error';
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Horário Inválido';
+            if (modalAvailabilityInfo) {
+                modalAvailabilityInfo.textContent = 'A hora de término deve ser depois da hora de início.';
+                modalAvailabilityInfo.className = 'availability-info error';
+            }
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Horário Inválido';
+            }
             updateModalItemsTotalValue(); 
             return;
         }
@@ -1768,23 +1784,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Helper functions for event address fields
     function clearEventAddressFields() {
-        addEventZipInput.value = '';
-        addEventStreetInput.value = '';
-        addEventNumberInput.value = '';
-        addEventComplementInput.value = '';
-        addEventNeighborhoodInput.value = '';
-        addEventCityInput.value = '';
-        addEventStateInput.value = '';
+        if (addEventZipInput) addEventZipInput.value = '';
+        if (addEventStreetInput) addEventStreetInput.value = '';
+        if (addEventNumberInput) addEventNumberInput.value = '';
+        if (addEventComplementInput) addEventComplementInput.value = '';
+        if (addEventNeighborhoodInput) addEventNeighborhoodInput.value = '';
+        if (addEventCityInput) addEventCityInput.value = '';
+        if (addEventStateInput) addEventStateInput.value = '';
     }
 
     function populateEventAddressFields(address) {
-        addEventZipInput.value = address.zip || '';
-        addEventStreetInput.value = address.street || '';
-        addEventNumberInput.value = address.number || '';
-        addEventComplementInput.value = address.complement || '';
-        addEventNeighborhoodInput.value = address.neighborhood || '';
-        addEventCityInput.value = address.city || '';
-        addEventStateInput.value = address.state || '';
+        if (addEventZipInput) addEventZipInput.value = address.zip || '';
+        if (addEventStreetInput) addEventStreetInput.value = address.street || '';
+        if (addEventNumberInput) addEventNumberInput.value = address.number || '';
+        if (addEventComplementInput) addEventComplementInput.value = address.complement || '';
+        if (addEventNeighborhoodInput) addEventNeighborhoodInput.value = address.neighborhood || '';
+        if (addEventCityInput) addEventCityInput.value = address.city || '';
+        if (addEventStateInput) addEventStateInput.value = address.state || '';
     }
 
     // NEW: Function to handle address option changes (radio buttons)
@@ -1837,19 +1853,29 @@ document.addEventListener('DOMContentLoaded', () => {
     function showBookingForm(bookingToEdit = null) {
         currentEditingBooking = bookingToEdit || null;
         
-        addBookingModalTitle.textContent = bookingToEdit ? 'Editar Agendamento' : 'Novo Agendamento';
-        addBookingSubmitBtn.textContent = bookingToEdit ? 'Atualizar Agendamento' : 'Agendar';
+        // Validação defensiva para elementos do modal
+        if (!addBookingModal || !addBookingForm) {
+            console.error('Modal de agendamento não encontrado');
+            return;
+        }
+        
+        if (addBookingModalTitle) {
+            addBookingModalTitle.textContent = bookingToEdit ? 'Editar Agendamento' : 'Novo Agendamento';
+        }
+        if (addBookingSubmitBtn) {
+            addBookingSubmitBtn.textContent = bookingToEdit ? 'Atualizar Agendamento' : 'Agendar';
+        }
         
         if (bookingToEdit) {
-            addBookingDateInput.value = bookingToEdit.date;
-            addBookingStartTimeInput.value = bookingToEdit.startTime || '';
-            addBookingEndTimeInput.value = bookingToEdit.endTime || '';
-            addEventNameInput.value = bookingToEdit.eventName;
-            addBookingPriceInput.value = bookingToEdit.price || 0;
-            addBookingClientSelect.value = bookingToEdit.client_id;
-            addBookingPaymentMethodInput.value = bookingToEdit.paymentMethod || ''; 
-            addBookingPaymentStatusInput.value = bookingToEdit.paymentStatus || ''; 
-            addBookingObservationsInput.value = bookingToEdit.observations || '';
+            if (addBookingDateInput) addBookingDateInput.value = bookingToEdit.date;
+            if (addBookingStartTimeInput) addBookingStartTimeInput.value = bookingToEdit.startTime || '';
+            if (addBookingEndTimeInput) addBookingEndTimeInput.value = bookingToEdit.endTime || '';
+            if (addEventNameInput) addEventNameInput.value = bookingToEdit.eventName;
+            if (addBookingPriceInput) addBookingPriceInput.value = bookingToEdit.price || 0;
+            if (addBookingClientSelect) addBookingClientSelect.value = bookingToEdit.client_id;
+            if (addBookingPaymentMethodInput) addBookingPaymentMethodInput.value = bookingToEdit.paymentMethod || ''; 
+            if (addBookingPaymentStatusInput) addBookingPaymentStatusInput.value = bookingToEdit.paymentStatus || ''; 
+            if (addBookingObservationsInput) addBookingObservationsInput.value = bookingToEdit.observations || '';
             
             // For editing, always default to manual address and populate it with existing eventAddress
             addBookingManualAddressRadio.checked = true; 
@@ -1857,13 +1883,13 @@ document.addEventListener('DOMContentLoaded', () => {
             addBookingEventAddressSection.style.display = 'block'; // Ensure manual fields are visible
             
         } else {
-            addBookingForm.reset(); 
-            addBookingDateInput.value = selectedBookingDate; 
-            addBookingClientSelect.value = '';
-            addBookingPriceInput.value = 0; 
-            addBookingPaymentMethodInput.value = ''; 
-            addBookingPaymentStatusInput.value = 'Pendente'; 
-            addBookingObservationsInput.value = '';
+            if (addBookingForm) addBookingForm.reset(); 
+            if (addBookingDateInput) addBookingDateInput.value = selectedBookingDate; 
+            if (addBookingClientSelect) addBookingClientSelect.value = '';
+            if (addBookingPriceInput) addBookingPriceInput.value = 0; 
+            if (addBookingPaymentMethodInput) addBookingPaymentMethodInput.value = ''; 
+            if (addBookingPaymentStatusInput) addBookingPaymentStatusInput.value = 'Pendente'; 
+            if (addBookingObservationsInput) addBookingObservationsInput.value = '';
             
             // For new booking, default to manual address option, clear fields
             addBookingManualAddressRadio.checked = true;
@@ -1878,7 +1904,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateModalAvailabilityInfo();
         updateModalItemsTotalValue(); 
         
-        addBookingModal.style.display = 'flex';
+        if (addBookingModal) {
+            addBookingModal.style.display = 'flex';
+        }
     }
 
     function closeModal(modalId = null) {
@@ -1955,17 +1983,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateModalItemsTotalValue() {
         let totalValue = 0;
-        addBookingItemsContainer.querySelectorAll('input[type="number"]').forEach(input => {
-            const itemId = input.dataset.itemId;
-            const quantity = parseInt(input.value, 10);
-            const item = inventory.find(i => i.id === itemId);
-            if (item && !isNaN(quantity) && quantity > 0) {
-                totalValue += quantity * (item.rentalPrice || 0);
-            }
-        });
-        addBookingItemsTotalValueSpan.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`; 
         
-        if (!currentEditingBooking || addBookingPriceInput.value === '0.00' || addBookingPriceInput.value === '0') {
+        if (addBookingItemsContainer) {
+            addBookingItemsContainer.querySelectorAll('input[type="number"]').forEach(input => {
+                const itemId = input.dataset.itemId;
+                const quantity = parseInt(input.value, 10);
+                const item = inventory.find(i => i.id === itemId);
+                if (item && !isNaN(quantity) && quantity > 0) {
+                    totalValue += quantity * (item.rentalPrice || 0);
+                }
+            });
+        }
+        
+        if (addBookingItemsTotalValueSpan) {
+            addBookingItemsTotalValueSpan.textContent = `R$ ${totalValue.toFixed(2).replace('.', ',')}`;
+        }
+        
+        if (addBookingPriceInput && (!currentEditingBooking || addBookingPriceInput.value === '0.00' || addBookingPriceInput.value === '0')) {
             addBookingPriceInput.value = totalValue.toFixed(2);
         }
     }
