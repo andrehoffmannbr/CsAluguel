@@ -382,6 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalItemsList = document.getElementById('modal-items-list');
     const modalContractLink = document.getElementById('modal-contract-link');
     const modalEditBookingBtn = document.getElementById('modal-edit-booking-btn');
+    const modalGenerateReceiptBtn = document.getElementById('modal-generate-receipt-btn');
     const modalCancelBookingBtn = document.getElementById('modal-cancel-booking-btn');
 
     // Add Item Confirmation Modal elements
@@ -446,6 +447,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedBookingDate = new Date().toISOString().split('T')[0];
     let currentEditingClient = null; 
     let currentEditingBooking = null;
+    let currentViewingBooking = null; // Para armazenar a reserva sendo visualizada no modal
 
     // Carregar dados iniciais do Supabase
     async function loadInitialData() {
@@ -1741,6 +1743,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openModal(booking) {
+        // Armazenar a reserva atual para uso no comprovante
+        currentViewingBooking = booking;
+        
         const client = clients.find(c => String(c.id) === String(booking.clientId)); 
 
         modalEventName.textContent = booking.eventName;
@@ -1792,6 +1797,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         modalEditBookingBtn.onclick = () => handleEditBooking(booking.id);
+        modalGenerateReceiptBtn.onclick = () => handleGenerateReceipt();
         modalCancelBookingBtn.onclick = () => deleteBooking(booking.id);
         
         modal.style.display = 'flex';
@@ -1944,6 +1950,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset specific states only if the relevant modal is closed or if it's a general close
         if (modalId === 'add-booking-modal' || !modalId) {
             currentEditingBooking = null;
+        }
+        if (modalId === 'booking-modal' || !modalId) {
+            currentViewingBooking = null; // Limpar reserva sendo visualizada
         }
         if (modalId === 'register-client-tab' || !modalId) { // This is a tab, not a modal, but consistent state
             currentEditingClient = null;
@@ -2582,4 +2591,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const downloadReceiptBtn = document.getElementById('download-receipt-btn');
     if (receiptCloseButton) receiptCloseButton.addEventListener('click', () => receiptModal.style.display = 'none');
     if (downloadReceiptBtn) downloadReceiptBtn.addEventListener('click', downloadReceipt);
+
+    // Função para gerar comprovante da reserva atual
+    function handleGenerateReceipt() {
+        if (!currentViewingBooking) {
+            showAlert('Erro: Nenhuma reserva selecionada para gerar comprovante.');
+            return;
+        }
+        
+        // Usar a funcionalidade existente de geração de recibo
+        showReceipt(currentViewingBooking);
+    }
+
+    // Helper functions for event address fields
 });
