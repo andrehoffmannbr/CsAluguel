@@ -1,8 +1,3 @@
-import { WebsimSocket } from '@websim/websim-socket';
-
-// Inicialização do WebsimSocket
-const room = new WebsimSocket();
-
 // Configuração do Supabase
 let supabase;
 
