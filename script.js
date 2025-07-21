@@ -401,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addBookingClientSelect = document.getElementById('add-booking-client');
     const addBookingDateInput = document.getElementById('add-booking-date');
-    const addBookingDateDisplay = document.getElementById('add-booking-date-display');
     const addBookingStartTimeInput = document.getElementById('add-booking-start-time');
     const addBookingEndTimeInput = document.getElementById('add-booking-end-time'); 
     const addEventNameInput = document.getElementById('add-event-name');
@@ -1491,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 sortedPeriodBookings.forEach(booking => {
-                    const client = clients.find(c => c.id == booking.client_id); 
+                    const client = clients.find(c => String(c.id) === String(booking.client_id)); 
                     const itemsBooked = Object.entries(booking.items)
                         .filter(([, quantity]) => quantity > 0)
                         .map(([itemId, quantity]) => {
@@ -1565,7 +1564,11 @@ document.addEventListener('DOMContentLoaded', () => {
             dailyBookingsContainer.innerHTML = '<p>Nenhuma reserva para este dia.</p>';
         } else {
             bookingsOnDate.forEach(booking => {
-                const client = clients.find(c => c.id == booking.client_id); 
+                // Debug para identificar problemas de ID
+                console.log('Booking client_id:', booking.client_id, typeof booking.client_id);
+                console.log('Available clients:', clients.map(c => ({id: c.id, name: c.name, type: typeof c.id})));
+                
+                const client = clients.find(c => String(c.id) === String(booking.client_id)); 
                 const itemEl = document.createElement('div');
                 itemEl.className = 'daily-booking-item';
 
@@ -1710,7 +1713,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function openModal(booking) {
-        const client = clients.find(c => c.id == booking.client_id); 
+        const client = clients.find(c => String(c.id) === String(booking.client_id)); 
 
         modalEventName.textContent = booking.eventName;
         modalClientName.textContent = client ? client.name : 'Cliente não encontrado';
@@ -1839,7 +1842,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (bookingToEdit) {
             addBookingDateInput.value = bookingToEdit.date;
-            addBookingDateDisplay.value = new Date(bookingToEdit.date + 'T00:00:00').toLocaleDateString('pt-BR');
             addBookingStartTimeInput.value = bookingToEdit.startTime || '';
             addBookingEndTimeInput.value = bookingToEdit.endTime || '';
             addEventNameInput.value = bookingToEdit.eventName;
@@ -1857,7 +1859,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             addBookingForm.reset(); 
             addBookingDateInput.value = selectedBookingDate; 
-            addBookingDateDisplay.value = new Date(selectedBookingDate + 'T00:00:00').toLocaleDateString('pt-BR'); 
             addBookingClientSelect.value = '';
             addBookingPriceInput.value = 0; 
             addBookingPaymentMethodInput.value = ''; 
@@ -2273,7 +2274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         sortedBookings.forEach(booking => {
-            const client = clients.find(c => c.id == booking.client_id); 
+            const client = clients.find(c => String(c.id) === String(booking.client_id)); 
             const li = document.createElement('li');
             li.setAttribute('data-booking-id', booking.id);
 
