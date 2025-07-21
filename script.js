@@ -88,8 +88,10 @@ function mapBookingToSnakeCase(booking) {
         client_id: booking.client_id || booking.clientId, // Aceita tanto camelCase quanto snake_case
         event_name: booking.eventName,
         date: booking.date,
-        start_time: booking.startTime,
-        end_time: booking.endTime,
+        start_date: booking.startDate,
+        end_date: booking.endDate,
+        start_time: booking.startTime, // manter para compatibilidade
+        end_time: booking.endTime,     // manter para compatibilidade
         items: booking.items,
         price: booking.price,
         payment_method: booking.paymentMethod,
@@ -108,8 +110,10 @@ function mapBookingFromSnakeCase(booking) {
         clientId: booking.client_id,
         eventName: booking.event_name,
         date: booking.date,
-        startTime: booking.start_time,
-        endTime: booking.end_time,
+        startDate: booking.start_date,
+        endDate: booking.end_date,
+        startTime: booking.start_time, // manter para compatibilidade
+        endTime: booking.end_time,     // manter para compatibilidade
         items: booking.items,
         price: booking.price,
         paymentMethod: booking.payment_method,
@@ -401,8 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const addBookingClientSelect = document.getElementById('add-booking-client');
     const addBookingDateInput = document.getElementById('add-booking-date');
-    const addBookingStartTimeInput = document.getElementById('add-booking-start-time');
-    const addBookingEndTimeInput = document.getElementById('add-booking-end-time'); 
+    const addBookingStartDateInput = document.getElementById('add-booking-start-date');
+    const addBookingEndDateInput = document.getElementById('add-booking-end-date'); 
     const addEventNameInput = document.getElementById('add-event-name');
     const addBookingItemsContainer = document.getElementById('add-booking-items-container');
     const addBookingObservationsInput = document.getElementById('add-booking-observations');
@@ -1503,12 +1507,14 @@ document.addEventListener('DOMContentLoaded', () => {
                         ? `<a href="${booking.contractDataUrl}" target="_blank" rel="noopener noreferrer" class="contract-link" onclick="event.stopPropagation()">Ver Contrato</a>`
                         : 'Sem Anexo';
 
-                    const timeRange = (booking.startTime && booking.endTime) ? `${booking.startTime} - ${booking.endTime}` : 'Não especificado';
+                    const dateRange = (booking.startDate && booking.endDate) ? 
+                        `${new Date(booking.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(booking.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}` : 
+                        (booking.date ? new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Período não especificado');
 
                     html += `
                         <tr>
-                            <td>${new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
-                            <td>${timeRange}</td>
+                            <td>${dateRange}</td>
+                            <td>-</td>
                             <td>${booking.eventName}</td>
                             <td>${client ? client.name : 'N/A'}</td>
                             <td>${itemsBooked || 'Nenhum item'}</td>
@@ -1580,12 +1586,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     })
                     .join(', ');
 
-                const timeRange = (booking.startTime && booking.endTime) ? `${booking.startTime} - ${booking.endTime}` : 'Horário não especificado';
+                const dateRange = (booking.startDate && booking.endDate) ? 
+                    `${new Date(booking.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(booking.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}` : 
+                    (booking.date ? new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Período não especificado');
 
                 itemEl.innerHTML = `
                     <h4>${booking.eventName}</h4>
                     <p><strong>Cliente:</strong> ${client ? client.name : 'N/A'}</p>
-                    <p><strong>Horário:</strong> ${timeRange}</p>
+                    <p><strong>Período:</strong> ${dateRange}</p>
                     <p><strong>Itens:</strong> ${itemsBooked || 'Nenhum item'}</p>
                     <p><strong>Valor:</strong> R$ ${booking.price ? booking.price.toFixed(2).replace('.', ',') : '0,00'}</p>
                     <p><strong>Pagamento:</strong> ${booking.paymentMethod || 'N/A'}</p>
@@ -1596,16 +1604,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function haveTimeOverlap(start1, end1, start2, end2) {
+    function haveDateOverlap(start1, end1, start2, end2) {
         if (!start1 || !end1 || !start2 || !end2) return false;
-        return start1 < end2 && start2 < end1;
+        return start1 <= end2 && start2 <= end1;
     }
 
-    function getAvailabilityForTimeRange(date, startTime, endTime, excludeBookingId = null) {
-        const bookingsOnDate = bookings.filter(booking => booking.date === date);
-        const relevantBookings = bookingsOnDate.filter(booking => 
-             booking.id !== excludeBookingId && haveTimeOverlap(startTime, endTime, booking.startTime, booking.endTime)
-        );
+    function getAvailabilityForDateRange(startDate, endDate, excludeBookingId = null) {
+        const relevantBookings = bookings.filter(booking => {
+            if (booking.id === excludeBookingId) return false;
+            
+            // Verificar se há sobreposição de datas
+            const bookingStart = booking.startDate || booking.date; // fallback para compatibilidade
+            const bookingEnd = booking.endDate || booking.date;     // fallback para compatibilidade
+            
+            return haveDateOverlap(startDate, endDate, bookingStart, bookingEnd);
+        });
         
         const available = {};
         
@@ -1629,26 +1642,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateModalAvailabilityInfo() {
         // Validação defensiva para garantir que elementos existem
-        if (!addBookingDateInput || !addBookingStartTimeInput || !addBookingEndTimeInput || !addBookingForm) {
+        if (!addBookingStartDateInput || !addBookingEndDateInput || !addBookingForm) {
             console.warn('Elementos do modal de agendamento não encontrados');
             return;
         }
         
-        const date = addBookingDateInput.value;
-        const startTime = addBookingStartTimeInput.value;
-        const endTime = addBookingEndTimeInput.value;
+        const startDate = addBookingStartDateInput.value;
+        const endDate = addBookingEndDateInput.value;
         const submitBtn = addBookingForm.querySelector('button[type="submit"]');
 
         const excludeId = currentEditingBooking ? currentEditingBooking.id : null;
         
-        if (!date || !startTime || !endTime) {
+        if (!startDate || !endDate) {
             if (modalAvailabilityInfo) {
-                modalAvailabilityInfo.textContent = 'Preencha a data e os horários para verificar a disponibilidade.';
+                modalAvailabilityInfo.textContent = 'Preencha as datas de início e término para verificar a disponibilidade.';
                 modalAvailabilityInfo.className = 'availability-info';
             }
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = currentEditingBooking ? 'Preencha horários para atualizar' : 'Preencha os horários';
+                submitBtn.textContent = currentEditingBooking ? 'Preencha as datas para atualizar' : 'Preencha as datas';
             }
             if (addBookingItemsContainer) {
                 addBookingItemsContainer.querySelectorAll('input').forEach(input => input.removeAttribute('max'));
@@ -1657,23 +1669,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        if (endTime <= startTime) {
+        if (endDate <= startDate) {
             if (modalAvailabilityInfo) {
-                modalAvailabilityInfo.textContent = 'A hora de término deve ser depois da hora de início.';
+                modalAvailabilityInfo.textContent = 'A data de término deve ser posterior à data de início.';
                 modalAvailabilityInfo.className = 'availability-info error';
             }
             if (submitBtn) {
                 submitBtn.disabled = true;
-                submitBtn.textContent = 'Horário Inválido';
+                submitBtn.textContent = 'Período Inválido';
             }
             updateModalItemsTotalValue(); 
             return;
         }
 
-        const availability = getAvailabilityForTimeRange(date, startTime, endTime, excludeId);
+        const availability = getAvailabilityForDateRange(startDate, endDate, excludeId);
 
         const availabilityText = inventory.map(item => `${item.name}: ${availability[item.id]}`).join(' | ');
-        modalAvailabilityInfo.textContent = `Disponível para ${startTime}-${endTime}: ${availabilityText}`;
+        const startDateFormatted = new Date(startDate + 'T00:00:00').toLocaleDateString('pt-BR');
+        const endDateFormatted = new Date(endDate + 'T00:00:00').toLocaleDateString('pt-BR');
+        modalAvailabilityInfo.textContent = `Disponível para período ${startDateFormatted} - ${endDateFormatted}: ${availabilityText}`;
 
         let hasNegativeAvailability = false;
         inventory.forEach(item => {
@@ -1748,7 +1762,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ].filter(Boolean).join(', ');
         modalEventAddress.textContent = addressString || 'Não informado';
 
-        modalEventTime.textContent = (booking.startTime && booking.endTime) ? `${booking.startTime} - ${booking.endTime}` : 'Não especificado';
+        const periodText = (booking.startDate && booking.endDate) ? 
+            `${new Date(booking.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(booking.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}` : 
+            (booking.date ? new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Período não especificado');
+        modalEventTime.textContent = periodText;
 
         const statusSpan = document.createElement('span');
         statusSpan.className = `payment-status status-${booking.paymentStatus.toLowerCase()}`;
@@ -1868,8 +1885,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (bookingToEdit) {
             if (addBookingDateInput) addBookingDateInput.value = bookingToEdit.date;
-            if (addBookingStartTimeInput) addBookingStartTimeInput.value = bookingToEdit.startTime || '';
-            if (addBookingEndTimeInput) addBookingEndTimeInput.value = bookingToEdit.endTime || '';
+            if (addBookingStartDateInput) addBookingStartDateInput.value = bookingToEdit.startDate || bookingToEdit.date;
+            if (addBookingEndDateInput) addBookingEndDateInput.value = bookingToEdit.endDate || bookingToEdit.date;
             if (addEventNameInput) addEventNameInput.value = bookingToEdit.eventName;
             if (addBookingPriceInput) addBookingPriceInput.value = bookingToEdit.price || 0;
             if (addBookingClientSelect) addBookingClientSelect.value = bookingToEdit.client_id;
@@ -1885,6 +1902,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             if (addBookingForm) addBookingForm.reset(); 
             if (addBookingDateInput) addBookingDateInput.value = selectedBookingDate; 
+            if (addBookingStartDateInput) addBookingStartDateInput.value = selectedBookingDate;
+            if (addBookingEndDateInput) addBookingEndDateInput.value = selectedBookingDate;
             if (addBookingClientSelect) addBookingClientSelect.value = '';
             if (addBookingPriceInput) addBookingPriceInput.value = 0; 
             if (addBookingPaymentMethodInput) addBookingPaymentMethodInput.value = ''; 
@@ -2009,8 +2028,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const clientId = addBookingClientSelect.value;
         const date = addBookingDateInput.value;
-        const startTime = addBookingStartTimeInput.value;
-        const endTime = addBookingEndTimeInput.value;
+        const startDate = addBookingStartDateInput.value;
+        const endDate = addBookingEndDateInput.value;
         const eventName = addEventNameInput.value.trim();
         const observations = addBookingObservationsInput.value.trim();
         const price = parseFloat(addBookingPriceInput.value) || 0; 
@@ -2036,8 +2055,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        if (!eventName || !date || !startTime || !endTime) {
-            showAlert('Por favor, preencha todos os campos obrigatórios (Evento, Data e Horário).');
+        if (!eventName || !startDate || !endDate) {
+            showAlert('Por favor, preencha todos os campos obrigatórios (Evento, Data de Início e Data de Término).');
             return;
         }
         if (!paymentMethod) { 
@@ -2049,14 +2068,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (endTime <= startTime) {
-            showAlert('A hora de término deve ser posterior à hora de início.');
+        if (endDate <= startDate) {
+            showAlert('A data de término deve ser posterior à data de início.');
             return;
         }
 
-        const availability = getAvailabilityForTimeRange(date, startTime, endTime, currentEditingBooking ? currentEditingBooking.id : null);
+        const availability = getAvailabilityForDateRange(startDate, endDate, currentEditingBooking ? currentEditingBooking.id : null);
         let canBook = true;
-        let alertMessage = `Reserva não permitida devido a conflito de estoque para ${new Date(date+'T00:00:00').toLocaleDateString('pt-BR')} (${startTime} - ${endTime}):\n`;
+        const startDateFormatted = new Date(startDate+'T00:00:00').toLocaleDateString('pt-BR');
+        const endDateFormatted = new Date(endDate+'T00:00:00').toLocaleDateString('pt-BR');
+        let alertMessage = `Reserva não permitida devido a conflito de estoque para período ${startDateFormatted} - ${endDateFormatted}:\n`;
 
         Object.keys(items).forEach(itemId => {
             const requestedQty = items[itemId] || 0;
@@ -2112,8 +2133,8 @@ document.addEventListener('DOMContentLoaded', () => {
             client_id: safeClientId,
             eventName,
             date,
-            startTime,
-            endTime,
+            startDate,
+            endDate,
             items,
             price,
             paymentMethod, 
@@ -2131,8 +2152,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: currentEditingBooking.id,
                 client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
-                start_time: bookingData.startTime,
-                end_time: bookingData.endTime,
+                start_date: bookingData.startDate,
+                end_date: bookingData.endDate,
                 payment_method: bookingData.paymentMethod,
                 payment_status: bookingData.paymentStatus,
                 contract_data_url: bookingData.contractDataUrl,
@@ -2149,8 +2170,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: newBookingId,
                 client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
-                start_time: bookingData.startTime,
-                end_time: bookingData.endTime,
+                start_date: bookingData.startDate,
+                end_date: bookingData.endDate,
                 payment_method: bookingData.paymentMethod,
                 payment_status: bookingData.paymentStatus,
                 contract_data_url: bookingData.contractDataUrl,
@@ -2195,8 +2216,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if(showBookingFormBtn) showBookingFormBtn.addEventListener('click', () => showBookingForm(null));
         if(addBookingCloseButton) addBookingCloseButton.addEventListener('click', () => closeModal('add-booking-modal')); 
         if(addBookingForm) addBookingForm.addEventListener('submit', handleUpsertBooking);
-        if(addBookingEndTimeInput) addBookingEndTimeInput.addEventListener('change', updateModalAvailabilityInfo); 
-        if(addBookingStartTimeInput) addBookingStartTimeInput.addEventListener('change', updateModalAvailabilityInfo); 
+        if(addBookingEndDateInput) addBookingEndDateInput.addEventListener('change', updateModalAvailabilityInfo); 
+        if(addBookingStartDateInput) addBookingStartDateInput.addEventListener('change', updateModalAvailabilityInfo); 
 
         if(prevMonthBookingBtn) prevMonthBookingBtn.addEventListener('click', () => navigateMiniCalendar(-1));
         if(nextMonthBookingBtn) nextMonthBookingBtn.addEventListener('click', () => navigateMiniCalendar(1));
@@ -2334,7 +2355,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 booking.eventAddress.zip
             ].filter(Boolean).join(', ');
 
-            const timeRange = (booking.startTime && booking.endTime) ? `${booking.startTime} - ${booking.endTime}` : 'Não especificado';
+            const dateRange = (booking.startDate && booking.endDate) ? 
+                `${new Date(booking.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} - ${new Date(booking.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}` : 
+                (booking.date ? new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR') : 'Período não especificado');
 
             li.innerHTML = `
                 <div class="booking-info-wrapper">
@@ -2342,7 +2365,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <strong>${booking.eventName}</strong>
                         <span class="client-name"><i class="fas fa-user-circle"></i> ${client ? client.name : 'N/A'}</span>
                         <span class="booking-address"><i class="fas fa-map-marker-alt"></i> ${addressString || 'Endereço não informado'}</span>
-                        <small><i class="fas fa-calendar-alt"></i> ${new Date(booking.date + 'T00:00:00').toLocaleDateString('pt-BR')} <i class="fas fa-clock"></i> ${timeRange}</small>
+                        <small><i class="fas fa-calendar-alt"></i> ${dateRange}</small>
                         <p>Itens: ${itemsBooked || 'Nenhum item'}</p>
                     </div>
                     <div class="booking-meta">
