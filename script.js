@@ -1,3 +1,8 @@
+import { WebsimSocket } from '@websim/websim-socket';
+
+// Inicialização do WebsimSocket
+const room = new WebsimSocket();
+
 // Configuração do Supabase
 let supabase;
 
@@ -482,29 +487,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- NEW LOGIN FUNCTIONS ---
     function checkLoginStatus() {
         const isLoggedIn = localStorage.getItem('isLoggedIn');
+        const loginContainer = document.getElementById('login-container');
+        const mainAppContent = document.getElementById('main-app-content');
         if (isLoggedIn === 'true') {
-            loginContainer.style.display = 'none';
-            mainAppContent.style.display = 'block';
+            if (loginContainer) loginContainer.style.display = 'none';
+            if (mainAppContent) mainAppContent.style.display = 'block';
             document.body.classList.remove('login-active');
+            // Carregar dados do Supabase ao logar
+            loadInitialData();
         } else {
-            loginContainer.style.display = 'flex'; 
-            mainAppContent.style.display = 'none';
+            if (loginContainer) loginContainer.style.display = 'flex';
+            if (mainAppContent) mainAppContent.style.display = 'none';
             document.body.classList.add('login-active');
         }
     }
 
-    async function handleLogin(e) {
+    function handleLogin(e) {
         e.preventDefault();
-        const username = usernameInput.value;
-        const password = passwordInput.value;
-
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginErrorMessage = document.getElementById('login-error-message');
+        const username = usernameInput ? usernameInput.value : '';
+        const password = passwordInput ? passwordInput.value : '';
         if (username === 'pedropsf2011@gmail.com' && password === '123456789') {
             localStorage.setItem('isLoggedIn', 'true');
             checkLoginStatus();
-            loginErrorMessage.textContent = ''; 
-            showAlert('Login bem-sucedido!', 'Bem-vindo(a)!'); 
+            if (loginErrorMessage) loginErrorMessage.textContent = '';
+            if (typeof showAlert === 'function') showAlert('Login bem-sucedido!', 'Bem-vindo(a)!');
         } else {
-            loginErrorMessage.textContent = 'Usuário ou senha incorretos.';
+            if (loginErrorMessage) loginErrorMessage.textContent = 'Usuário ou senha incorretos.';
         }
     }
 
@@ -512,7 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleLogout() {
         localStorage.removeItem('isLoggedIn');
         checkLoginStatus();
-        showAlert('Você saiu do sistema.', 'Desconectado');
+        if (typeof showAlert === 'function') showAlert('Você saiu do sistema.', 'Desconectado');
     }
 
     // Custom Alert/Confirm Functions
@@ -2318,4 +2329,206 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     init();
+
+    // Funções de recibo/comprovante de agendamento
+    function generateReceiptHTML(booking) {
+        const client = clients.find(c => c.id == booking.clientId);
+        const dateRange = (booking.startDate && booking.endDate) 
+            ? `${new Date(booking.startDate + 'T00:00:00').toLocaleDateString('pt-BR')} até ${new Date(booking.endDate + 'T00:00:00').toLocaleDateString('pt-BR')}` 
+            : 'Não especificado';
+
+        const addressString = booking.eventAddress && [
+            booking.eventAddress.street,
+            booking.eventAddress.number,
+            booking.eventAddress.complement,
+            booking.eventAddress.neighborhood,
+            booking.eventAddress.city,
+            booking.eventAddress.state,
+            booking.eventAddress.zip
+        ].filter(Boolean).join(', ');
+
+        const itemsList = Object.entries(booking.items)
+            .filter(([, quantity]) => quantity > 0)
+            .map(([itemId, quantity]) => {
+                const item = inventory.find(i => i.id === itemId);
+                const itemName = item ? item.name : 'Item não encontrado';
+                const unitPrice = item ? item.rentalPrice : 0;
+                const totalPrice = unitPrice * quantity;
+                return {
+                    name: itemName,
+                    quantity,
+                    unitPrice,
+                    totalPrice
+                };
+            });
+
+        const currentDate = new Date().toLocaleDateString('pt-BR');
+        const currentTime = new Date().toLocaleTimeString('pt-BR');
+        
+        // Calcular subtotal dos itens
+        const itemsSubtotal = itemsList.reduce((sum, item) => sum + item.totalPrice, 0);
+        const freightValue = booking.freightValue || 0;
+        const totalAmount = (booking.price || 0); // Usa o valor negociado como total final
+
+        return `
+            <div class="receipt-header">
+                <div class="company-logo">
+                    <img src="img/logo.png" alt="CS Logo" class="receipt-logo">
+                </div>
+                <div class="company-info">
+                    <h1>CS Aluguel de Mesa e Pula Pula</h1>
+                    <p>Comprovante de Agendamento</p>
+                </div>
+            </div>
+            
+            <div class="receipt-details">
+                <div class="receipt-number">
+                    <strong>Nº do Agendamento:</strong> ${booking.id}
+                </div>
+                <div class="receipt-date">
+                    <strong>Data de Emissão:</strong> ${currentDate} às ${currentTime}
+                </div>
+            </div>
+
+            <div class="receipt-section">
+                <h3>Dados do Cliente</h3>
+                <p><strong>Nome:</strong> ${client ? client.name : 'Cliente não encontrado'}</p>
+                ${client && client.phone ? `<p><strong>Telefone:</strong> ${client.phone}</p>` : ''}
+                ${client && client.email ? `<p><strong>Email:</strong> ${client.email}</p>` : ''}
+                ${client && client.cpf ? `<p><strong>CPF/CNPJ:</strong> ${client.cpf}</p>` : ''}
+            </div>
+
+            <div class="receipt-section">
+                <h3>Dados do Evento</h3>
+                <p><strong>Nome do Evento:</strong> ${booking.eventName}</p>
+                <p><strong>Período:</strong> ${dateRange}</p>
+                <p><strong>Endereço:</strong> ${addressString || 'Não informado'}</p>
+                ${booking.observations ? `<p><strong>Observações:</strong> ${booking.observations}</p>` : ''}
+            </div>
+
+            <div class="receipt-section">
+                <h3>Detalhamento</h3>
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Qtd</th>
+                            <th>Valor Unit.</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${itemsList.map(item => `
+                            <tr>
+                                <td>${item.name}</td>
+                                <td>${item.quantity}</td>
+                                <td>R$ ${item.unitPrice.toFixed(2).replace('.', ',')}</td>
+                                <td>R$ ${item.totalPrice.toFixed(2).replace('.', ',')}</td>
+                            </tr>
+                        `).join('')}
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Subtotal dos Itens:</strong></td>
+                            <td><strong>R$ ${itemsSubtotal.toFixed(2).replace('.', ',')}</strong></td>
+                        </tr>
+                        ${freightValue > 0 ? `
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Valor do Frete:</strong></td>
+                            <td><strong>R$ ${freightValue.toFixed(2).replace('.', ',')}</strong></td>
+                        </tr>
+                        ` : ''}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="receipt-section">
+                <h3>Informações de Pagamento</h3>
+                <div class="payment-info">
+                    <p><strong>Forma de Pagamento:</strong> ${booking.paymentMethod || 'Não especificado'}</p>
+                    <p><strong>Status:</strong> <span class="payment-status status-${booking.paymentStatus.toLowerCase()}">${booking.paymentStatus}</span></p>
+                    <p class="total-price"><strong>Total Geral:</strong> R$ ${totalAmount.toFixed(2).replace('.', ',')}</p>
+                </div>
+            </div>
+
+            <div class="receipt-footer">
+                <p>Este comprovante confirma o agendamento dos itens listados acima para o período especificado.</p>
+                <p>Para alterações ou cancelamentos, entre em contato conosco.</p>
+                <p><strong>Obrigado pela preferência!</strong></p>
+                <p><strong>CS Aluguel de Mesa e Pula Pula</strong></p>
+            </div>
+        `;
+    }
+
+    function showReceipt(booking) {
+        const receiptContent = document.getElementById('receipt-content');
+        const receiptModal = document.getElementById('receipt-modal');
+        const receiptHTML = generateReceiptHTML(booking);
+        receiptContent.innerHTML = receiptHTML;
+        receiptModal.style.display = 'flex';
+    }
+
+    async function downloadReceipt() {
+        const receiptContent = document.getElementById('receipt-content');
+        const printWindow = window.open('', '_blank');
+        const receiptHTML = receiptContent.innerHTML;
+        let styleContent = '';
+        try {
+            const response = await fetch('style.css');
+            styleContent = await response.text();
+        } catch (error) {
+            styleContent = '';
+        }
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Comprovante de Agendamento</title>
+                <style>
+                    ${styleContent}
+                </style>
+            </head>
+            <body>
+                ${receiptHTML}
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
+    async function shareReceipt() {
+        try {
+            const receiptContent = document.getElementById('receipt-content');
+            const receiptHTML = receiptContent.innerHTML;
+            const shareData = {
+                title: 'Comprovante de Agendamento - CS Aluguel',
+                text: 'Comprovante de agendamento dos itens alugados.',
+                url: window.location.href
+            };
+            if (navigator.share) {
+                await navigator.share(shareData);
+            } else {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = receiptHTML;
+                const textContent = tempDiv.textContent || tempDiv.innerText;
+                if (navigator.clipboard) {
+                    await navigator.clipboard.writeText(textContent);
+                    showAlert('Comprovante copiado para a área de transferência!', 'Sucesso');
+                } else {
+                    showAlert('Função de compartilhamento não disponível. Use o botão de imprimir.', 'Informação');
+                }
+            }
+        } catch (error) {
+            showAlert('Erro ao compartilhar comprovante. Tente imprimir.', 'Erro');
+        }
+    }
+
+    // Listeners para modal de recibo
+    const receiptModal = document.getElementById('receipt-modal');
+    const receiptCloseButton = receiptModal ? receiptModal.querySelector('.close-button') : null;
+    const downloadReceiptBtn = document.getElementById('download-receipt-btn');
+    if (receiptCloseButton) receiptCloseButton.addEventListener('click', () => receiptModal.style.display = 'none');
+    if (downloadReceiptBtn) downloadReceiptBtn.addEventListener('click', downloadReceipt);
 });

@@ -3,6 +3,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Estoque de Eventos</title>
+    <!-- Importmap para Websim Socket -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@websim/websim-socket": "https://esm.websim.com/@websim/websim-socket"
+      }
+    }
+    </script>
     <!-- Configuração das variáveis do Supabase -->
     <script>
         // Definir variáveis do Supabase no window para acesso no cliente
@@ -472,6 +480,7 @@
             <p><strong>Contrato:</strong> <a id="modal-contract-link" href="#" target="_blank" rel="noopener noreferrer">Ver Contrato</a></p>
             <div class="modal-actions">
                 <button id="modal-edit-booking-btn" class="modal-action-btn edit-btn"><i class="fas fa-edit"></i> Editar</button>
+                <button id="modal-generate-receipt-btn" class="modal-action-btn receipt-btn"><i class="fas fa-file-alt"></i> Gerar Comprovante</button>
                 <button id="modal-cancel-booking-btn" class="modal-action-btn cancel-btn"><i class="fas fa-times-circle"></i> Cancelar Reserva</button>
             </div>
         </div>
@@ -483,6 +492,7 @@
             <span class="close-button">&times;</span>
             <h2 id="add-booking-modal-title">Novo Agendamento</h2>
             <form id="add-booking-form">
+                <input type="hidden" id="add-booking-id">
                 <input type="hidden" id="add-booking-date">
                 
                 <div class="form-group">
@@ -493,23 +503,18 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="add-booking-date-display">Data</label>
-                    <input type="text" id="add-booking-date-display" readonly>
-                </div>
-
                 <div class="form-grid-time">
                     <div class="form-group">
-                        <label for="add-booking-start-time">Hora de Início</label>
-                        <input type="time" id="add-booking-start-time" required>
+                        <label for="add-booking-start-date">Data de Início</label>
+                        <input type="date" id="add-booking-start-date" required>
                     </div>
                     <div class="form-group">
-                        <label for="add-booking-end-time">Hora de Término</label>
-                        <input type="time" id="add-booking-end-time" required>
+                        <label for="add-booking-end-date">Data de Término</label>
+                        <input type="date" id="add-booking-end-date" required>
                     </div>
                 </div>
 
-                <div id="modal-availability-info" class="availability-info">Preencha data e horários para ver a disponibilidade.</div>
+                <div id="modal-availability-info" class="availability-info">Preencha as datas para ver a disponibilidade.</div>
                  
                 <div class="form-group">
                     <label for="add-event-name">Nome do Evento/Serviço</label>
@@ -585,6 +590,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="add-booking-freight-value">Valor do Frete (R$)</label>
+                    <input type="number" id="add-booking-freight-value" step="0.01" min="0" value="0" placeholder="0,00">
+                </div>
+
+                <div class="form-group">
                     <label for="add-booking-payment-method">Forma de Pagamento:</label>
                     <select id="add-booking-payment-method" required>
                         <option value="">Selecione a forma</option>
@@ -647,6 +657,19 @@
             <p class="confirm-text" id="custom-alert-confirm-message"></p>
             <div class="confirm-actions" id="custom-alert-confirm-actions">
                 <!-- Buttons will be dynamically inserted -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para comprovante de agendamento -->
+    <div id="receipt-modal" class="modal">
+        <div class="modal-content modal-receipt">
+            <span class="close-button">&times;</span>
+            <div id="receipt-content">
+                <!-- Conteúdo do comprovante será gerado aqui -->
+            </div>
+            <div class="receipt-actions">
+                <button id="download-receipt-btn" class="receipt-action-btn download-btn"><i class="fas fa-download"></i> Baixar</button>
             </div>
         </div>
     </div>
