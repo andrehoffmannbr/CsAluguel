@@ -88,8 +88,8 @@ function mapBookingToSnakeCase(booking) {
         client_id: booking.client_id || booking.clientId, // Aceita tanto camelCase quanto snake_case
         event_name: booking.eventName,
         date: booking.date,
-        start_time: booking.startDate, // Usar start_time para data de início
-        end_time: booking.endDate,     // Usar end_time para data de fim
+        start_date: booking.startDate, // Usar start_time para data de início
+        end_date: booking.endDate,     // Usar end_time para data de fim
         items: booking.items,
         price: booking.price,
         payment_method: booking.paymentMethod,
@@ -108,8 +108,8 @@ function mapBookingFromSnakeCase(booking) {
         clientId: booking.client_id,
         eventName: booking.event_name,
         date: booking.date,
-        startDate: booking.start_time, // Mapear start_time para startDate 
-        endDate: booking.end_time,     // Mapear end_time para endDate
+        startDate: booking.start_date, // Mapear start_time para startDate 
+        endDate: booking.end_date,     // Mapear end_time para endDate
         startTime: booking.start_time, // manter para compatibilidade com código que ainda usa startTime
         endTime: booking.end_time,     // manter para compatibilidade com código que ainda usa endTime
         items: booking.items,
@@ -2159,8 +2159,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 id: currentEditingBooking.id,
                 client_id: bookingData.client_id,
                 event_name: bookingData.eventName,
-                start_time: bookingData.startDate,
-                end_time: bookingData.endDate,
+                start_date: bookingData.startDate,
+                end_date: bookingData.endDate,
                 payment_method: bookingData.paymentMethod,
                 payment_status: bookingData.paymentStatus,
                 contract_data_url: bookingData.contractDataUrl,
