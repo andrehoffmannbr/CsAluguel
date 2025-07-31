@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const newItemNameInput = document.getElementById('item-name');
     const newItemQuantityInput = document.getElementById('item-quantity');
     const newItemCostInput = document.getElementById('item-cost');
-    const newItemRentalPriceInput = document.getElementById('item-rental-price'); 
+ 
     const toggleAddItemFormBtn = document.getElementById('toggle-add-item-form-btn');
     const addItemSection = document.getElementById('add-item-section');
     const hamburgerMenu = document.getElementById('hamburger-menu');
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmItemNameSpan = document.getElementById('confirm-item-name');
     const confirmItemQuantitySpan = document.getElementById('confirm-item-quantity');
     const confirmItemCostSpan = document.getElementById('confirm-item-cost');
-    const confirmItemRentalPriceSpan = document.getElementById('confirm-item-rental-price'); 
+ 
     const confirmAddItemBtn = document.getElementById('confirm-add-item-btn');
     const cancelAddItemBtn = document.getElementById('cancel-add-item-btn');
 
@@ -699,7 +699,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${item.name}</h4>
                     <span class="item-id">ID: ${item.id}</span>
                     <span class="item-cost">Custo: R$ ${(item.cost || 0).toFixed(2).replace('.', ',')}</span>
-                    <span class="item-rental-price">Aluguel: R$ ${(item.rentalPrice || 0).toFixed(2).replace('.', ',')}</span>
+
                 </div>
                 <div class="quantity-controls">
                     <label for="qty-${item.id}">Qtd:</label>
@@ -709,10 +709,7 @@ document.addEventListener('DOMContentLoaded', () => {
                      <label for="cost-${item.id}">Custo (R$):</label>
                      <input type="number" id="cost-${item.id}" value="${item.cost || 0}" min="0" step="0.01" data-id="${item.id}">
                 </div>
-                <div class="cost-controls">
-                     <label for="rental-price-${item.id}">Aluguel (R$):</label>
-                     <input type="number" id="rental-price-${item.id}" value="${item.rentalPrice || 0}" min="0" step="0.01" data-id="${item.id}">
-                </div>
+                
                 <div class="item-actions">
                     <button class="update-item-btn" data-id="${item.id}">Atualizar</button>
                     <button class="delete-item-btn" data-id="${item.id}">Remover</button>
@@ -727,7 +724,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const itemId = e.target.dataset.id;
         const newQuantity = parseInt(document.getElementById(`qty-${itemId}`).value, 10);
         const newCost = parseFloat(document.getElementById(`cost-${itemId}`).value);
-        const newRentalPrice = parseFloat(document.getElementById(`rental-price-${itemId}`).value); 
+        const newRentalPrice = 0; // Valor fixo para aluguel 
 
         const itemToUpdate = inventory.find(item => item.id === itemId);
         if (itemToUpdate && !isNaN(newQuantity) && newQuantity >= 0 && !isNaN(newCost) && newCost >= 0 && !isNaN(newRentalPrice) && newRentalPrice >= 0) {
@@ -758,7 +755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = newItemNameInput.value.trim();
         const quantity = parseInt(newItemQuantityInput.value, 10);
         const cost = parseFloat(newItemCostInput.value) || 0;
-        const rentalPrice = parseFloat(newItemRentalPriceInput.value) || 0; 
+        const rentalPrice = 0; // Valor fixo para aluguel 
 
         if (!name || isNaN(quantity) || quantity < 0) {
             showAlert('Por favor, preencha o nome e a quantidade válida.');
@@ -774,7 +771,7 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmItemNameSpan.textContent = name;
         confirmItemQuantitySpan.textContent = quantity;
         confirmItemCostSpan.textContent = `R$ ${cost.toFixed(2).replace('.', ',')}`;
-        confirmItemRentalPriceSpan.textContent = `R$ ${rentalPrice.toFixed(2).replace('.', ',')}`; 
+ 
 
         confirmAddItemBtn.dataset.name = name;
         confirmAddItemBtn.dataset.quantity = quantity;
@@ -786,7 +783,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function executeAddItem() {
-        const { name, quantity, cost, rentalPrice, id } = confirmAddItemBtn.dataset; 
+        const { name, quantity, cost, id } = confirmAddItemBtn.dataset;
+        const rentalPrice = 0; // Valor fixo para aluguel 
 
         await supabaseUpsert('inventory', { 
             id, 
@@ -808,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addItemForm.reset();
         newItemQuantityInput.value = 1;
         newItemCostInput.value = 0;
-        newItemRentalPriceInput.value = 0; 
+ 
         
         renderTotalInventory();
         renderInventoryManagement();
@@ -822,7 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = e.target.dataset.name;
         const quantity = parseInt(e.target.dataset.quantity, 10);
         const cost = parseFloat(e.target.dataset.cost) || 0;
-        const rentalPrice = parseFloat(e.target.dataset.rentalPrice) || 0; 
+        const rentalPrice = 0; // Valor fixo para aluguel 
         
         const id = createSlug(name);
         if (inventory.some(item => item.id === id)) {

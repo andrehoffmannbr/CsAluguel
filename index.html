@@ -390,10 +390,7 @@
                                         <label for="item-cost">Custo por Item (R$):</label>
                                         <input type="number" id="item-cost" min="0" step="0.01" value="0" placeholder="0,00">
                                     </div>
-                                    <div class="form-group">
-                                        <label for="item-rental-price">Valor de Aluguel (R$):</label>
-                                        <input type="number" id="item-rental-price" min="0" step="0.01" value="0" placeholder="0,00">
-                                    </div>
+
                                 </div>
                                 <button type="submit"><i class="fas fa-plus-circle"></i> Adicionar Item ao Estoque</button>
                             </form>
@@ -401,14 +398,14 @@
                             <div class="quick-add-items">
                                 <h3>Adicionar Itens Comuns</h3>
                                 <div class="quick-add-grid">
-                                    <button type="button" class="quick-add-btn" data-name="Mesa Redonda" data-quantity="10" data-cost="50" data-rental-price="100">+ Mesa Redonda (10)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Mesa Retangular" data-quantity="15" data-cost="60" data-rental-price="120">+ Mesa Retangular (15)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Cadeira Plástica" data-quantity="100" data-cost="15" data-rental-price="30">+ Cadeira Plástica (100)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Toalha de Mesa" data-quantity="25" data-cost="10" data-rental-price="20">+ Toalha de Mesa (25)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Tenda 3x3" data-quantity="5" data-cost="300" data-rental-price="600">+ Tenda 3x3 (5)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Pula Pula" data-quantity="2" data-cost="1500" data-rental-price="200">+ Pula Pula (2)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Jogo de Mesa" data-quantity="20" data-cost="80" data-rental-price="150">+ Jogo de Mesa (20)</button>
-                                    <button type="button" class="quick-add-btn" data-name="Aparelho de Som" data-quantity="3" data-cost="500" data-rental-price="1000">+ Aparelho de Som (3)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Mesa Redonda" data-quantity="10" data-cost="50">+ Mesa Redonda (10)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Mesa Retangular" data-quantity="15" data-cost="60">+ Mesa Retangular (15)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Cadeira Plástica" data-quantity="100" data-cost="15">+ Cadeira Plástica (100)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Toalha de Mesa" data-quantity="25" data-cost="10">+ Toalha de Mesa (25)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Tenda 3x3" data-quantity="5" data-cost="300">+ Tenda 3x3 (5)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Pula Pula" data-quantity="2" data-cost="1500">+ Pula Pula (2)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Jogo de Mesa" data-quantity="20" data-cost="80">+ Jogo de Mesa (20)</button>
+                                    <button type="button" class="quick-add-btn" data-name="Aparelho de Som" data-quantity="3" data-cost="500">+ Aparelho de Som (3)</button>
                                 </div>
                             </div>
                         </section>
@@ -634,7 +631,7 @@
                 <p><strong>Nome do Item:</strong> <span id="confirm-item-name"></span></p>
                 <p><strong>Quantidade:</strong> <span id="confirm-item-quantity"></span></p>
                 <p><strong>Custo por Item:</strong> <span id="confirm-item-cost"></span></p>
-                <p><strong>Valor de Aluguel:</strong> <span id="confirm-item-rental-price"></span></p>
+                
             </div>
             <div class="confirm-actions">
                 <button id="confirm-add-item-btn"><i class="fas fa-check-circle"></i> Confirmar</button>
